@@ -1,0 +1,35 @@
+# sudo apt install git curl wget
+# sudo apt install mysql-server mysql-client libmysqlclient-dev
+# sudo apt install redis-server
+
+# sudo apt install libreadline-gplv2-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev
+# wget https://www.python.org/ftp/python/3.6.9/Python-3.6.9.tgz
+# tar -xzf Python-3.6.9.tgz
+# cd Python-3.6.9
+# ./configure --enable-optimizations
+# make
+# sudo make install
+# python3.6 --version
+
+# wget https://bootstrap.pypa.io/get-pip.py
+# python3.6 get-pip.py
+# pip3 --version
+
+# cd ~
+# mkdir chronos
+# cd chronos
+# git clone http://stss-wx/vimpel/chronos/telescope.git telescope
+# cd telescope
+# pip3 install -r requirements.txt
+# cp telescope/settings.py-template telescope/settings.py
+# nano telescope/settings.py
+
+# sudo mysql
+# CREATE USER hubble IDENTIFIED BY '123';
+# CREATE DATABASE test CHARACTER SET 'UTF8' COLLATE 'utf8_unicode_ci';
+# GRANT ALL ON test.* TO hubble;
+# quit
+
+# python3.6 manage.py migrate
+# python3.6 manage.py createsuperuser
+# python3.6 manage.py runserver
