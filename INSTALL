@@ -1,5 +1,5 @@
 # sudo apt install git curl wget
-# sudo apt install mysql-server mysql-client libmysqlclient-dev
+# sudo apt install postgresql libpq-dev
 # sudo apt install redis-server
 
 # sudo apt install libreadline-gplv2-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev
@@ -24,11 +24,13 @@
 # cp telescope/settings.py-template telescope/settings.py
 # nano telescope/settings.py
 
-# sudo mysql
-# CREATE USER hubble IDENTIFIED BY '123';
-# CREATE DATABASE test CHARACTER SET 'UTF8' COLLATE 'utf8_unicode_ci';
-# GRANT ALL ON test.* TO hubble;
-# quit
+# sudo -u postgres psql
+# CREATE USER hubble WITH PASSWORD '123';
+# CREATE DATABASE test WITH OWNER=hubble ENCODING='UTF8';
+# GRANT ALL PRIVILEGES ON DATABASE test TO hubble;
+# \c test
+# ALTER SCHEMA public OWNER TO hubble;
+# \q
 
 # python3.6 manage.py migrate
 # python3.6 manage.py createsuperuser

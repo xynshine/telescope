@@ -120,13 +120,13 @@ WSGI_APPLICATION = 'telescope.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'test',
         'USER': 'hubble',
         'PASSWORD': '123',
         'HOST': 'localhost',
-        'PORT': 3306,
-	'OPTIONS': {'charset': 'utf8mb4'},
+        'PORT': 5432,
+#	'OPTIONS': {'charset': 'utf8mb4'},
     }
 }
 
