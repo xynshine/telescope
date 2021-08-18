@@ -4,17 +4,21 @@ from django.conf import settings
 
 class Telescope(models.Model):
     ONLINE = 1
-    OFFLINE = 2
+    OFFLINE = 0
     STATUS_CHOICES = (
-        (ONLINE, 'Online'),
-        (OFFLINE, 'Offline'),
+        (ONLINE, 'В сети'),
+        (OFFLINE, 'Не в сети'),
     )
-    name = models.CharField('Название', max_length=100)
+    alias = models.TextField('Псевдоним', unique=True)
+    name = models.TextField('Название', unique=True)
+    code = models.IntegerField('Код', unique=True)
     status = models.SmallIntegerField('Статус', choices=STATUS_CHOICES, default=OFFLINE)
-    description = models.TextField('Описание', blank=True, null=True)
-    location = models.CharField('Местоположение', max_length=300, blank=True, null=True)
-    latitude = models.FloatField('Широта в градусах', blank=True, null=True)
-    longitude = models.FloatField('Долгота в градусах', blank=True, null=True)
+    description = models.TextField('Описание', blank=True)
+    location = models.TextField('Местоположение', blank=True)
+    altitude = models.FloatField('Высота над уровнем моря в м')
+    latitude = models.FloatField('Широта в градусах')
+    longitude = models.FloatField('Долгота в градусах')
+    fov = models.FloatField('Поле зрения в градусах')
     avatar = models.ImageField('Аватар', null=True, blank=True, upload_to='telescopes')
 
     class Meta:

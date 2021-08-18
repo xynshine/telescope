@@ -164,8 +164,8 @@ def get_telescope_plan(request, telescope_id, task_id):
         'name': telescope.name,
         'site_lon': telescope.longitude,
         'site_lat': telescope.latitude,
-        'site_height': 0.31,
-        'FOV': 5.8,
+        'site_height': telescope.altitude,
+        'FOV': telescope.fov,
     }
     data = {
         'user': task.author.get_full_name(),
