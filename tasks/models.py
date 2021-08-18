@@ -35,6 +35,16 @@ class Telescope(models.Model):
         return balance.minutes if balance else 0
 
 
+class Satellite(models.Model):
+
+    class Meta:
+        verbose_name = 'Спутник'
+        verbose_name_plural = 'Спутники'
+
+    def __str__(self):
+        return f'Спутник (id={self.id})'
+
+
 class InputData(models.Model):
     NONE = 0
     TLE = 1
@@ -46,6 +56,7 @@ class InputData(models.Model):
     )
     author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Автор входных данных', related_name='tasks_inputdata', on_delete=models.DO_NOTHING)
     dt = models.DateTimeField('Дата создания', auto_now_add=True)
+    expected_sat = models.ForeignKey(to=Satellite, verbose_name='Ожидаемый спутник', related_name='tasks_inputdata', null=True, on_delete=models.DO_NOTHING)
     data_type = models.SmallIntegerField('Тип данных', choices=TYPE_CHOICES, default=NONE)
     data_tle = models.TextField('Данные в формате TLE', blank=True)
     data_json = models.JSONField('Данные в формате JSON', null=True)
