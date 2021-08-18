@@ -35,6 +35,29 @@ class Telescope(models.Model):
         return balance.minutes if balance else 0
 
 
+class InputData(models.Model):
+    NONE = 0
+    TLE = 1
+    JSON = 2
+    TYPE_CHOICES = (
+        (NONE, 'Нет данных'),
+        (TLE, 'Элементы орбит в формате TLE'),
+        (JSON, 'Массив точек в формате JSON'),
+    )
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Автор входных данных', related_name='tasks_inputdata', on_delete=models.DO_NOTHING)
+    dt = models.DateTimeField('Дата создания', auto_now_add=True)
+    data_type = models.SmallIntegerField('Тип данных', choices=TYPE_CHOICES, default=NONE)
+    data_tle = models.TextField('Данные в формате TLE', blank=True)
+    data_json = models.JSONField('Данные в формате JSON', null=True)
+
+    class Meta:
+        verbose_name = 'Входные данные'
+        verbose_name_plural = 'Входные данные'
+
+    def __str__(self):
+        return f'{self.get_data_type_display()} (id={self.id}) от {self.author.get_full_name()} за {self.get_dt_display()}'
+
+
 class Task(models.Model):
     CREATED = 1
     RECEIVED = 2
