@@ -141,7 +141,7 @@ class TrackingData(models.Model):
     task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='tracking_data', on_delete=models.DO_NOTHING)
     satellite = models.ForeignKey(to=Satellite, verbose_name='Спутник', related_name='tracking_data', null=True, on_delete=models.DO_NOTHING)
     mag = models.FloatField('Звездная велечина')
-    step_sec = models.IntegerField('Шаг по времени', default=1)
+    step_sec = models.FloatField('Шаг по времени', default=1)
     count = models.IntegerField('Количество снимков', default=20)
 
     class Meta:
@@ -177,18 +177,23 @@ class Point(models.Model):
         (EARTH_SYSTEM, 'Земная система координат'),
         (STARS_SYSTEM, 'Звездная система координат'),
     )
-    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='points', null=True, blank=True, on_delete=models.CASCADE)
-    satellite_id = models.IntegerField('Номер спутника')
+    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='points', on_delete=models.DO_NOTHING)
+    satellite = models.ForeignKey(to=Satellite, verbose_name='Спутник', related_name='points', null=True, on_delete=models.DO_NOTHING)
     mag = models.FloatField('Звездная велечина')
-    dt = models.DateTimeField('Время снимка')
+    dt = models.DateTimeField('Дата и время снимка')
+    jdn = models.IntegerField('Юлианская дата снимка')
+    jd = models.FloatField('Юлианское время снимка')
     alpha = models.FloatField('Азимут')
-    beta = models.FloatField('Высота')
-    exposure = models.IntegerField('Требуемая выдержка снимка')
+    beta = models.FloatField('Угол места')
+    exposure = models.FloatField('Требуемая выдержка снимка')
     cs_type = models.SmallIntegerField('Система координат', choices=SYSTEM_CHOICES, default=EARTH_SYSTEM)
 
     class Meta:
         verbose_name = 'Точка для снимка'
         verbose_name_plural = 'Точки для снимков'
+
+    def __str__(self):
+        return f'{self.satellite}; {self.alpha}°; {self.beta}°; {self.exposure} с; {self.get_dt_display()}'
 
 
 class Balance(models.Model):
