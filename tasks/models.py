@@ -12,6 +12,7 @@ class Telescope(models.Model):
     alias = models.TextField('Псевдоним', unique=True)
     name = models.TextField('Название', unique=True)
     code = models.IntegerField('Код', unique=True)
+    enabled = models.BooleanField('Доступность', default=True)
     status = models.SmallIntegerField('Статус', choices=STATUS_CHOICES, default=OFFLINE)
     description = models.TextField('Описание', blank=True)
     location = models.TextField('Местоположение', blank=True)
@@ -55,7 +56,7 @@ class InputData(models.Model):
         (JSON, 'Массив точек в формате JSON'),
     )
     author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Автор входных данных', related_name='tasks_inputdata', on_delete=models.DO_NOTHING)
-    dt = models.DateTimeField('Дата создания', auto_now_add=True)
+    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
     expected_sat = models.ForeignKey(to=Satellite, verbose_name='Ожидаемый спутник', related_name='tasks_inputdata', null=True, on_delete=models.DO_NOTHING)
     data_type = models.SmallIntegerField('Тип данных', choices=TYPE_CHOICES, default=NONE)
     data_tle = models.TextField('Данные в формате TLE', blank=True)
@@ -66,15 +67,17 @@ class InputData(models.Model):
         verbose_name_plural = 'Входные данные'
 
     def __str__(self):
-        return f'{self.get_data_type_display()} (id={self.id}) от {self.author.get_full_name()} за {self.get_dt_display()}'
+        return f'{self.get_data_type_display()} (id={self.id}) от {self.author.get_full_name()} за {self.get_created_at_display()}'
 
 
 class Task(models.Model):
+    DRAFT = 0
     CREATED = 1
     RECEIVED = 2
     READY = 3
     FAILED = 4
     STATUS_CHOICES = (
+        (DRAFT, 'Черновик'),
         (CREATED, 'Создано'),
         (RECEIVED, 'Получено телескопом'),
         (READY, 'Выполнено'),
@@ -82,27 +85,28 @@ class Task(models.Model):
     )
     POINTS_MODE = 1
     TRACKING_MODE = 2
-    TLE_MODE = 3
-
     TYPE_CHOICES = (
         (POINTS_MODE, 'Снимки по точкам'),
         (TRACKING_MODE, 'Трэкинг по точкам'),
-        (TLE_MODE, 'Снимки по TLE'),
     )
-    status = models.SmallIntegerField('Статус', choices=STATUS_CHOICES, default=CREATED)
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Автор задания', related_name='tasks', on_delete=models.CASCADE)
-    telescope = models.ForeignKey(Telescope, verbose_name='Телескоп', related_name='tasks', on_delete=models.CASCADE)
+    status = models.SmallIntegerField('Статус задания', choices=STATUS_CHOICES, default=DRAFT)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Автор задания', related_name='tasks', on_delete=models.DO_NOTHING)
+    telescope = models.ForeignKey(Telescope, verbose_name='Телескоп', related_name='tasks', on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+    input_data = models.ForeignKey(InputData, verbose_name='Входные данные', related_name='tasks', null=True, on_delete=models.DO_NOTHING)
     task_type = models.SmallIntegerField('Тип задания', choices=TYPE_CHOICES)
     start_dt = models.DateTimeField('Дата и время начала наблюдения', null=True, blank=True)
     end_dt = models.DateTimeField('Дата и время конца наблюдения', null=True, blank=True)
+    jdn = models.IntegerField('Юлианская дата начала наблюдения', null=True)
+    start_jd = models.FloatField('Юлианское время начала наблюдения', null=True)
+    end_jd = models.FloatField('Юлианское время конца наблюдения', null=True)
 
     class Meta:
         verbose_name = 'Задание'
         verbose_name_plural = 'Задания'
 
     def __str__(self):
-        return f'{self.get_task_type_display()} (id={self.id}) от {self.author.get_full_name()}'
+        return f'{self.get_task_type_display()} (id={self.id}) от {self.author.get_full_name()} за {self.get_created_at_display()}'
 
 
 class Frame(models.Model):

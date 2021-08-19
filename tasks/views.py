@@ -85,6 +85,7 @@ class TrackingTaskView(generics.CreateAPIView):
             return Response(data={'msg': f'Ошибка создания задания, нет доступа к данному телескопу', 'status': 'error'}, status=400)
 
 
+'''
 class TleTaskView(generics.CreateAPIView):
     queryset = Task.objects.filter(task_type=Task.TLE_MODE)
     serializer_class = TleTaskSerializer
@@ -113,6 +114,7 @@ class TleTaskView(generics.CreateAPIView):
             return Response(
                 data={'msg': f'Ошибка создания задания, нет доступа к данному телескопу', 'status': 'error'},
                 status=400)
+'''
 
 
 class BalanceRequestView(generics.ListAPIView):
