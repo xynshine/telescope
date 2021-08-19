@@ -122,14 +122,19 @@ class Frame(models.Model):
 
 
 class TrackPoint(models.Model):
-    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='track_points', null=True, blank=True, on_delete=models.CASCADE)
+    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='track_points', on_delete=models.DO_NOTHING)
     alpha = models.FloatField('Азимут')
-    beta = models.FloatField('Высота')
-    dt = models.DateTimeField('Время снимка')
+    beta = models.FloatField('Угол места')
+    dt = models.DateTimeField('Дата и время снимка')
+    jdn = models.IntegerField('Юлианская дата снимка')
+    jd = models.FloatField('Юлианское время снимка')
 
     class Meta:
         verbose_name = 'Точка для трекинга'
         verbose_name_plural = 'Точки для трекинга'
+
+    def __str__(self):
+        return f'{self.alpha}°; {self.beta}°; {self.get_dt_display()}'
 
 
 class TrackingData(models.Model):
