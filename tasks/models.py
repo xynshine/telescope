@@ -112,13 +112,18 @@ class Task(models.Model):
 
 
 class Frame(models.Model):
-    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='frames', null=True, blank=True, on_delete=models.CASCADE)
-    exposure = models.IntegerField('Требуемая выдержка снимка')
-    dt = models.DateTimeField('Время снимка')
+    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='frames', on_delete=models.DO_NOTHING)
+    exposure = models.FloatField('Требуемая выдержка снимка')
+    dt = models.DateTimeField('Дата и время снимка')
+    jdn = models.IntegerField('Юлианская дата снимка')
+    jd = models.FloatField('Юлианское время снимка')
 
     class Meta:
         verbose_name = 'Фрейм'
         verbose_name_plural = 'Фреймы (выдержка + время снимка)'
+
+    def __str__(self):
+        return f'{self.exposure} с; {self.get_dt_display()}'
 
 
 class TrackPoint(models.Model):
