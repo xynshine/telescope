@@ -145,14 +145,20 @@ class TrackingData(models.Model):
 
 
 class TLEData(models.Model):
-    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='TLE_data', null=True, blank=True, on_delete=models.CASCADE)
-    satellite_id = models.IntegerField('Номер спутника')
-    line1 = models.CharField('Первая строка TLE спутника', max_length=255)
-    line2 = models.CharField('Вторая строка TLE спутника', max_length=255)
+    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='TLE_data', on_delete=models.DO_NOTHING)
+    satellite = models.ForeignKey(to=Satellite, verbose_name='Спутник', related_name='TLE_data', null=True, on_delete=models.DO_NOTHING)
+    header = models.CharField('Заголовок', max_length=25, null=True, blank=True)
+    line1 = models.CharField('Первая строка TLE спутника', max_length=70)
+    line2 = models.CharField('Вторая строка TLE спутника', max_length=70)
 
     class Meta:
-        verbose_name = 'Данные для TLE'
-        verbose_name_plural = 'Данные для TLE'
+        verbose_name = 'Данные в формате TLE'
+        verbose_name_plural = 'Данные в формате TLE'
+
+    def __str__(self):
+        if self.header:
+            return self.header
+        return 'Без заголовка'
 
 
 class Point(models.Model):
