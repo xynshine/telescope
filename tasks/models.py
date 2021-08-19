@@ -244,10 +244,10 @@ class BalanceRequest(models.Model):
 
 
 class TaskResult(models.Model):
-    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='results', null=True, blank=True, on_delete=models.CASCADE)
+    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='results', on_delete=models.DO_NOTHING)
     image = models.ImageField('Снимок', null=True, blank=True, upload_to='results')
-    point = models.ForeignKey(to=Point, verbose_name='Точка', related_name='result', null=True, blank=True, on_delete=models.CASCADE)
-    frame = models.ForeignKey(to=Frame, verbose_name='Фрейм', related_name='result', null=True, blank=True, on_delete=models.CASCADE)
+    point = models.ForeignKey(to=Point, verbose_name='Точка', related_name='result', null=True, on_delete=models.DO_NOTHING)
+    frame = models.ForeignKey(to=Frame, verbose_name='Фрейм', related_name='result', null=True, on_delete=models.DO_NOTHING)
 
     class Meta:
         verbose_name = 'Результаты наблюдений'
