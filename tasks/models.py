@@ -37,13 +37,15 @@ class Telescope(models.Model):
 
 
 class Satellite(models.Model):
+    number = models.IntegerField('Номер спутника', unique=True)
+    name = models.TextField('Название спутника', unique=True)
 
     class Meta:
         verbose_name = 'Спутник'
         verbose_name_plural = 'Спутники'
 
     def __str__(self):
-        return f'Спутник (id={self.id})'
+        return f'{self.number} "{self.name}" (id={self.id})'
 
 
 class InputData(models.Model):
