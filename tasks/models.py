@@ -38,7 +38,7 @@ class Telescope(models.Model):
 
 class Satellite(models.Model):
     number = models.IntegerField('Номер спутника', unique=True)
-    name = models.TextField('Название спутника', unique=True)
+    name = models.TextField('Название спутника', blank=True)
 
     class Meta:
         verbose_name = 'Спутник'
@@ -138,15 +138,19 @@ class TrackPoint(models.Model):
 
 
 class TrackingData(models.Model):
-    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='tracking_data', null=True, blank=True, on_delete=models.CASCADE)
-    satellite_id = models.IntegerField('Номер спутника')
+    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='tracking_data', on_delete=models.DO_NOTHING)
+    satellite = models.ForeignKey(to=Satellite, verbose_name='Спутник', related_name='tracking_data', null=True, on_delete=models.DO_NOTHING)
     mag = models.FloatField('Звездная велечина')
-    step_sec = models.IntegerField('Временной шаг', default=1)
-    count = models.IntegerField('Количество снимков', default=100)
+    step_sec = models.IntegerField('Шаг по времени', default=1)
+    count = models.IntegerField('Количество снимков', default=20)
 
     class Meta:
         verbose_name = 'Данные для трекинга'
         verbose_name_plural = 'Данные для трекинга'
+
+    def __str__(self):
+        if self.satellite:
+            return f'{self.satellite}; {self.count} × {self.step_sec} с'
 
 
 class TLEData(models.Model):
