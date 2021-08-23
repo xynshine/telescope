@@ -4,6 +4,8 @@ import tasks.views as views
 
 urlpatterns = [
     re_path(r'^telescopes/$', views.TelescopeView.as_view(), name='telescope_list'),
+    re_path(r'^satellites/$', views.SatelliteView.as_view(), name='satellite_list'),
+    re_path(r'^satellite_add/$', views.SatelliteCreateView.as_view(), name='satellite_add'),
     re_path(r'^get_tasks/$', views.UserTasks.as_view(), name='user_tasks'),
     re_path(r'^(?P<pk>\d+)/get_result/$', views.TaskResult.as_view(), name='task_result'),
     re_path(r'^requests/$', views.BalanceRequestView.as_view(), name='requests'),

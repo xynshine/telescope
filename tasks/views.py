@@ -9,9 +9,10 @@ from rest_framework import generics
 from rest_framework.response import Response
 
 
-from tasks.models import Telescope, Task, BalanceRequest, Balance
+from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, Balance
 from tasks.serializers import (
     TelescopeSerializer, TelescopeBalanceSerializer, PointTaskSerializer,
+    SatelliteSerializer, InputDataSerializer,
     TrackingTaskSerializer, TleTaskSerializer, BalanceRequestSerializer,
     BalanceRequestCreateSerializer, TaskSerializer, TaskResultSerializer
 )
@@ -29,6 +30,27 @@ class TelescopeView(generics.ListAPIView):
 class TelescopeChoosingView(generics.ListAPIView):
     queryset = Telescope.objects.all()
     serializer_class = TelescopeBalanceSerializer
+
+
+class SatelliteView(generics.ListAPIView):
+    queryset = Satellite.objects.all()
+    serializer_class = SatelliteSerializer
+
+
+class SatelliteCreateView(generics.CreateAPIView):
+    queryset = Satellite.objects.all()
+    serializer_class = SatelliteSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        serializer = serializer_class(data=self.request.data, context=self.get_serializer_context())
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        satellite = serializer.save()
+        return Response(data={
+            'msg': f'Спутник №{satellite.id} успешно создан',
+            'status': 'ok'
+        })
 
 
 class PointTaskView(generics.CreateAPIView):
