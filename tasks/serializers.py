@@ -2,7 +2,7 @@ import locale
 
 from rest_framework import serializers
 from telescope.settings import SITE_URL, MEDIA_URL
-from tasks.models import Telescope, Point, Task, TrackPoint, Frame, TrackingData, TLEData, BalanceRequest, TaskResult
+from tasks.models import Telescope, Satellite, InputData, Point, Task, TrackPoint, Frame, TrackingData, TLEData, BalanceRequest, TaskResult
 from tasks.helpers import converting_degrees, is_float, is_int
 
 
@@ -30,7 +30,7 @@ class TelescopeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Telescope
-        fields = ('id', 'name', 'avatar', 'status', 'description', 'location', 'latitude', 'longitude', 'balance')
+        fields = ('id', 'name', 'avatar', 'status', 'description', 'location', 'latitude', 'longitude', 'altitude', 'fov', 'balance')
 
 
 class TelescopeBalanceSerializer(serializers.ModelSerializer):
@@ -44,6 +44,24 @@ class TelescopeBalanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Telescope
         fields = ('label', 'value', 'balance')
+
+
+class SatelliteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Satellite
+        fields = ('id', 'number', 'name')
+
+
+class InputDataSerializer(serializers.ModelSerializer):
+    data_type = serializers.SerializerMethodField()
+
+    def get_data_type(self, obj):
+        return obj.get_data_type_display()
+
+    class Meta:
+        model = InputData
+        fields = ('id', 'author', 'created_at', 'data_type', 'expected_sat')
 
 
 class PointSerializer(serializers.ModelSerializer):
