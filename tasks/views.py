@@ -28,7 +28,7 @@ class TelescopeView(generics.ListAPIView):
 
 
 class TelescopeChoosingView(generics.ListAPIView):
-    queryset = Telescope.objects.all()
+    queryset = Telescope.objects.filter(enabled=True)
     serializer_class = TelescopeBalanceSerializer
 
 
