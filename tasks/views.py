@@ -54,8 +54,10 @@ class SatelliteCreateView(generics.CreateAPIView):
 
 
 class InputDataView(generics.ListAPIView):
-    queryset = InputData.objects.all()
     serializer_class = InputDataSerializer
+
+    def get_queryset(self):
+        return InputData.objects.filter(author=self.request.user)
 
 
 class InputDataCreateView(generics.CreateAPIView):
