@@ -67,7 +67,7 @@ class InputDataCreateView(generics.CreateAPIView):
         serializer = serializer_class(data=self.request.data, context=self.get_serializer_context())
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
-        inputdata = serializer.save()
+        inputdata = serializer.save(self.request.user)
         return Response(data={
             'msg': f'Входные данные №{inputdata.id} успешно созданы',
             'status': 'ok'

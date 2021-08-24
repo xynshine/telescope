@@ -55,13 +55,13 @@ class SatelliteSerializer(serializers.ModelSerializer):
 
 class InputDataSerializer(serializers.ModelSerializer):
 
-    def save(self):
+    def save(self, user):
         data_type = InputData.NONE
         if len(self.validated_data.get('data_tle')) > 0:
             data_type = InputData.TLE
         if self.validated_data.get('data_json') is not None:
             data_type = InputData.JSON
-        data = super().save(data_type=data_type)
+        data = super().save(data_type=data_type, author=user)
         return data
 
     class Meta:
