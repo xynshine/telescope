@@ -53,6 +53,27 @@ class SatelliteCreateView(generics.CreateAPIView):
         })
 
 
+class InputDataView(generics.ListAPIView):
+    queryset = InputData.objects.all()
+    serializer_class = InputDataSerializer
+
+
+class InputDataCreateView(generics.CreateAPIView):
+    queryset = InputData.objects.all()
+    serializer_class = InputDataSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        serializer = serializer_class(data=self.request.data, context=self.get_serializer_context())
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        inputdata = serializer.save()
+        return Response(data={
+            'msg': f'Входные данные №{inputdata.id} успешно созданы',
+            'status': 'ok'
+        })
+
+
 class PointTaskView(generics.CreateAPIView):
     queryset = Task.objects.filter(task_type=Task.POINTS_MODE)
     serializer_class = PointTaskSerializer

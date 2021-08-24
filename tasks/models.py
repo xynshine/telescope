@@ -60,7 +60,7 @@ class InputData(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Автор входных данных', related_name='tasks_inputdata', on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True, blank=True)
     expected_sat = models.ForeignKey(to=Satellite, verbose_name='Ожидаемый спутник', related_name='tasks_inputdata', null=True, on_delete=models.DO_NOTHING)
-    data_type = models.SmallIntegerField('Тип данных', choices=TYPE_CHOICES, default=NONE)
+    data_type = models.SmallIntegerField('Тип данных', choices=TYPE_CHOICES)
     data_tle = models.TextField('Данные в формате TLE', blank=True)
     data_json = models.JSONField('Данные в формате JSON', null=True)
 

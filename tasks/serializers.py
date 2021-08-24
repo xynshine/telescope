@@ -54,14 +54,20 @@ class SatelliteSerializer(serializers.ModelSerializer):
 
 
 class InputDataSerializer(serializers.ModelSerializer):
-    data_type = serializers.SerializerMethodField()
+    data_type = serializers.HiddenField(default=InputData.NONE)
 
-    def get_data_type(self, obj):
-        return obj.get_data_type_display()
+    def save(self):
+        data_type = InputData.NONE
+        if len(self.validated_data.get('data_tle')) > 0:
+            data_type = InputData.TLE
+        if self.validated_data.get('data_json') is not None:
+            data_type = InputData.JSON
+        data = super().save(data_type=data_type)
+        return data
 
     class Meta:
         model = InputData
-        fields = ('id', 'author', 'created_at', 'data_type', 'expected_sat')
+        fields = ('id', 'author', 'expected_sat', 'data_type', 'data_tle', 'data_json', 'created_at')
 
 
 class PointSerializer(serializers.ModelSerializer):
