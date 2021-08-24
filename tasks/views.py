@@ -23,7 +23,7 @@ DT_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 class TelescopeView(generics.ListAPIView):
-    queryset = Telescope.objects.all()
+    queryset = Telescope.objects.filter(enabled=True)
     serializer_class = TelescopeSerializer
 
 
