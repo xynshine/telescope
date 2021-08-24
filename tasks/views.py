@@ -38,7 +38,6 @@ class SatelliteView(generics.ListAPIView):
 
 
 class SatelliteCreateView(generics.CreateAPIView):
-    queryset = Satellite.objects.all()
     serializer_class = SatelliteSerializer
 
     def create(self, request, *args, **kwargs):
@@ -61,7 +60,6 @@ class InputDataView(generics.ListAPIView):
 
 
 class InputDataCreateView(generics.CreateAPIView):
-    queryset = InputData.objects.all()
     serializer_class = InputDataSerializer
 
     def create(self, request, *args, **kwargs):
