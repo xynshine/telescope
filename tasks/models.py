@@ -69,7 +69,7 @@ class InputData(models.Model):
         verbose_name_plural = 'Входные данные'
 
     def __str__(self):
-        return f'{self.get_data_type_display()} (id={self.id}) от {self.author.get_full_name()} за {self.get_created_at_display()}'
+        return f'{self.get_data_type_display()} (id={self.id}) от {self.author.get_full_name()} за {self.created_at.strftime("%d %b %Y, %H:%M")}'
 
 
 class Task(models.Model):
@@ -91,17 +91,17 @@ class Task(models.Model):
         (POINTS_MODE, 'Снимки по точкам'),
         (TRACKING_MODE, 'Трэкинг по точкам'),
     )
-    status = models.SmallIntegerField('Статус задания', choices=STATUS_CHOICES, default=DRAFT)
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Автор задания', related_name='tasks', on_delete=models.DO_NOTHING)
+    status = models.SmallIntegerField('Статус задания', choices=STATUS_CHOICES, editable=False, default=DRAFT)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Автор задания', related_name='tasks', editable=False, on_delete=models.DO_NOTHING)
     telescope = models.ForeignKey(Telescope, verbose_name='Телескоп', related_name='tasks', on_delete=models.DO_NOTHING)
-    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+    created_at = models.DateTimeField('Дата создания', auto_now_add=True, blank=True)
     input_data = models.ForeignKey(InputData, verbose_name='Входные данные', related_name='tasks', null=True, on_delete=models.DO_NOTHING)
     task_type = models.SmallIntegerField('Тип задания', choices=TYPE_CHOICES)
-    start_dt = models.DateTimeField('Дата и время начала наблюдения', null=True, blank=True)
-    end_dt = models.DateTimeField('Дата и время конца наблюдения', null=True, blank=True)
-    jdn = models.IntegerField('Юлианская дата начала наблюдения', null=True)
-    start_jd = models.FloatField('Юлианское время начала наблюдения', null=True)
-    end_jd = models.FloatField('Юлианское время конца наблюдения', null=True)
+    start_dt = models.DateTimeField('Дата и время начала наблюдения', editable=False, null=True, blank=True)
+    end_dt = models.DateTimeField('Дата и время конца наблюдения', editable=False, null=True, blank=True)
+    jdn = models.IntegerField('Юлианская дата начала наблюдения', editable=False, null=True)
+    start_jd = models.FloatField('Юлианское время начала наблюдения', editable=False, null=True)
+    end_jd = models.FloatField('Юлианское время конца наблюдения', editable=False, null=True)
 
     class Meta:
         verbose_name = 'Задание'

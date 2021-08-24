@@ -356,37 +356,19 @@ class BalanceRequestCreateSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
-    telescope = serializers.CharField(source='telescope.name')
-    status = serializers.SerializerMethodField()
-    created = serializers.SerializerMethodField()
-    task_type = serializers.SerializerMethodField()
-    start_dt = serializers.SerializerMethodField()
-    end_dt = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
-
-    def get_created(self, obj):
-        locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
-        return obj.created_at.strftime('%d %b %Y, %H:%M')
-
-    def get_start_dt(self, obj):
-        return obj.start_dt.strftime('%d %b, %H:%M:%S')
-
-    def get_end_dt(self, obj):
-        return obj.end_dt.strftime('%d %b, %H:%M:%S')
-
-    def get_status(self, obj):
-        return obj.get_status_display()
-
-    def get_task_type(self, obj):
-        return obj.get_task_type_display()
 
     def get_url(self, obj):
         if obj.status == Task.READY:
             return f'{obj.id}/results/'
 
+    def save(self, user):
+        task = super().save(author=user)
+        return task
+
     class Meta:
         model = Task
-        fields = ('telescope', 'status', 'created', 'task_type', 'start_dt', 'end_dt', 'url')
+        fields = ('id', 'status', 'author', 'created_at', 'telescope', 'task_type', 'input_data', 'start_dt', 'end_dt', 'jdn', 'start_jd', 'end_jd', 'url')
 
 
 class TaskResultSerializer(serializers.ModelSerializer):

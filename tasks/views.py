@@ -196,6 +196,21 @@ class UserTasks(generics.ListAPIView):
         return Task.objects.filter(author=self.request.user).order_by('-created_at')
 
 
+class UserTaskCreateView(generics.CreateAPIView):
+    serializer_class = TaskSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        serializer = serializer_class(data=self.request.data, context=self.get_serializer_context())
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        inputtask = serializer.save(self.request.user)
+        return Response(data={
+            'msg': f'Задание №{inputtask.id} успешно создано',
+            'status': 'ok'
+        })
+
+
 class TaskResult(generics.RetrieveAPIView):
     serializer_class = TaskResultSerializer
     queryset = Task.objects.all()
