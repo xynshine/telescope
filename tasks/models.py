@@ -93,7 +93,7 @@ class Task(models.Model):
     )
     status = models.SmallIntegerField('Статус задания', choices=STATUS_CHOICES, editable=False, default=DRAFT)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Автор задания', related_name='tasks', editable=False, on_delete=models.DO_NOTHING)
-    telescope = models.ForeignKey(Telescope, verbose_name='Телескоп', related_name='tasks', on_delete=models.DO_NOTHING)
+    telescope = models.ForeignKey(Telescope, verbose_name='Телескоп', related_name='tasks', limit_choices_to={'enabled': True}, on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True, blank=True)
     input_data = models.ForeignKey(InputData, verbose_name='Входные данные', related_name='tasks', null=True, on_delete=models.DO_NOTHING)
     task_type = models.SmallIntegerField('Тип задания', choices=TYPE_CHOICES)
