@@ -54,7 +54,6 @@ class SatelliteSerializer(serializers.ModelSerializer):
 
 
 class InputDataSerializer(serializers.ModelSerializer):
-    data_type = serializers.HiddenField(default=InputData.NONE)
 
     def save(self):
         data_type = InputData.NONE
