@@ -48,30 +48,6 @@ class Satellite(models.Model):
         return f'{self.number} "{self.name}"'
 
 
-class InputData(models.Model):
-    NONE = 0
-    TLE = 1
-    JSON = 2
-    TYPE_CHOICES = (
-        (NONE, 'Нет данных'),
-        (TLE, 'Элементы орбит в формате TLE'),
-        (JSON, 'Массив точек в формате JSON'),
-    )
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Автор входных данных', related_name='tasks_inputdata', editable=False, on_delete=models.DO_NOTHING)
-    created_at = models.DateTimeField('Дата создания', auto_now_add=True, blank=True)
-    expected_sat = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Ожидаемый спутник', related_name='tasks_inputdata', null=True, on_delete=models.DO_NOTHING)
-    data_type = models.SmallIntegerField('Тип данных', choices=TYPE_CHOICES, editable=False)
-    data_tle = models.TextField('Данные в формате TLE', blank=True)
-    data_json = models.JSONField('Данные в формате JSON', null=True)
-
-    class Meta:
-        verbose_name = 'Входные данные'
-        verbose_name_plural = 'Входные данные'
-
-    def __str__(self):
-        return f'{self.created_at.strftime("%Y-%m-%d %H:%M")} от {self.author.get_full_name()}: {self.get_data_type_display()}'
-
-
 class Task(models.Model):
     DRAFT = 0
     CREATED = 1
@@ -95,7 +71,6 @@ class Task(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Автор задания', related_name='tasks', editable=False, on_delete=models.DO_NOTHING)
     telescope = models.ForeignKey(Telescope, verbose_name='Телескоп', related_name='tasks', limit_choices_to={'enabled': True}, on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True, blank=True)
-    input_data = models.ForeignKey(InputData, verbose_name='Входные данные', related_name='tasks', null=True, on_delete=models.DO_NOTHING)
     task_type = models.SmallIntegerField('Тип задания', choices=TYPE_CHOICES)
     start_dt = models.DateTimeField('Дата и время начала наблюдения', editable=False, null=True, blank=True)
     end_dt = models.DateTimeField('Дата и время конца наблюдения', editable=False, null=True, blank=True)
@@ -109,6 +84,29 @@ class Task(models.Model):
 
     def __str__(self):
         return f'{self.created_at.strftime("%Y-%m-%d %H:%M")} от {self.author.get_full_name()}: {self.get_task_type_display()}'
+
+
+class InputData(models.Model):
+    NONE = 0
+    TLE = 1
+    JSON = 2
+    TYPE_CHOICES = (
+        (NONE, 'Нет данных'),
+        (TLE, 'Элементы орбит в формате TLE'),
+        (JSON, 'Массив точек в формате JSON'),
+    )
+    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='tasks_inputdata', on_delete=models.CASCADE)
+    expected_sat = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Ожидаемый спутник', related_name='tasks_inputdata', null=True, on_delete=models.DO_NOTHING)
+    data_type = models.SmallIntegerField('Тип данных', choices=TYPE_CHOICES, editable=False)
+    data_tle = models.TextField('Данные в формате TLE', blank=True)
+    data_json = models.JSONField('Данные в формате JSON', null=True)
+
+    class Meta:
+        verbose_name = 'Входные данные'
+        verbose_name_plural = 'Входные данные'
+
+    def __str__(self):
+        return f'{self.get_data_type_display()} по {self.expected_sat} для {self.task}'
 
 
 class Frame(models.Model):

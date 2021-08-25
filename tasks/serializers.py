@@ -55,18 +55,18 @@ class SatelliteSerializer(serializers.ModelSerializer):
 
 class InputDataSerializer(serializers.ModelSerializer):
 
-    def save(self, user):
+    def save(self):
         data_type = InputData.NONE
         if len(self.validated_data.get('data_tle')) > 0:
             data_type = InputData.TLE
         if self.validated_data.get('data_json') is not None:
             data_type = InputData.JSON
-        data = super().save(data_type=data_type, author=user)
+        data = super().save(data_type=data_type)
         return data
 
     class Meta:
         model = InputData
-        fields = ('id', 'author', 'expected_sat', 'data_type', 'data_tle', 'data_json', 'created_at')
+        fields = ('id', 'task', 'expected_sat', 'data_type', 'data_tle', 'data_json')
 
 
 class PointSerializer(serializers.ModelSerializer):

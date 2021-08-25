@@ -56,7 +56,8 @@ class InputDataView(generics.ListAPIView):
     serializer_class = InputDataSerializer
 
     def get_queryset(self):
-        return InputData.objects.filter(author=self.request.user).order_by('-id')
+        tasks = Task.objects.filter(author=self.request.user)
+        return InputData.objects.filter(task__in=tasks).order_by('-id')
 
 
 class InputDataCreateView(generics.CreateAPIView):
@@ -67,7 +68,7 @@ class InputDataCreateView(generics.CreateAPIView):
         serializer = serializer_class(data=self.request.data, context=self.get_serializer_context())
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
-        inputdata = serializer.save(self.request.user)
+        inputdata = serializer.save()
         return Response(data={
             'msg': f'Входные данные №{inputdata.id} успешно созданы',
             'status': 'ok'
