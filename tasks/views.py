@@ -33,7 +33,7 @@ class TelescopeChoosingView(generics.ListAPIView):
 
 
 class SatelliteView(generics.ListAPIView):
-    queryset = Satellite.objects.all()
+    queryset = Satellite.objects.all().order_by('number')
     serializer_class = SatelliteSerializer
 
 

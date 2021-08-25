@@ -45,7 +45,7 @@ class Satellite(models.Model):
         verbose_name_plural = 'Спутники'
 
     def __str__(self):
-        return f'{self.number} "{self.name}" (id={self.id})'
+        return f'{self.number} "{self.name}"'
 
 
 class InputData(models.Model):
@@ -59,7 +59,7 @@ class InputData(models.Model):
     )
     author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Автор входных данных', related_name='tasks_inputdata', editable=False, on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True, blank=True)
-    expected_sat = models.ForeignKey(to=Satellite, verbose_name='Ожидаемый спутник', related_name='tasks_inputdata', null=True, on_delete=models.DO_NOTHING)
+    expected_sat = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Ожидаемый спутник', related_name='tasks_inputdata', null=True, on_delete=models.DO_NOTHING)
     data_type = models.SmallIntegerField('Тип данных', choices=TYPE_CHOICES, editable=False)
     data_tle = models.TextField('Данные в формате TLE', blank=True)
     data_json = models.JSONField('Данные в формате JSON', null=True)
@@ -144,7 +144,7 @@ class TrackPoint(models.Model):
 
 class TrackingData(models.Model):
     task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='tracking_data', on_delete=models.DO_NOTHING)
-    satellite = models.ForeignKey(to=Satellite, verbose_name='Спутник', related_name='tracking_data', null=True, on_delete=models.DO_NOTHING)
+    satellite = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Спутник', related_name='tracking_data', null=True, on_delete=models.DO_NOTHING)
     mag = models.FloatField('Звездная велечина')
     step_sec = models.FloatField('Шаг по времени', default=1)
     count = models.IntegerField('Количество снимков', default=20)
@@ -160,7 +160,7 @@ class TrackingData(models.Model):
 
 class TLEData(models.Model):
     task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='TLE_data', on_delete=models.DO_NOTHING)
-    satellite = models.ForeignKey(to=Satellite, verbose_name='Спутник', related_name='TLE_data', null=True, on_delete=models.DO_NOTHING)
+    satellite = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Спутник', related_name='TLE_data', null=True, on_delete=models.DO_NOTHING)
     header = models.CharField('Заголовок', max_length=25, null=True, blank=True)
     line1 = models.CharField('Первая строка TLE спутника', max_length=70)
     line2 = models.CharField('Вторая строка TLE спутника', max_length=70)
@@ -183,7 +183,7 @@ class Point(models.Model):
         (STARS_SYSTEM, 'Звездная система координат'),
     )
     task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='points', on_delete=models.DO_NOTHING)
-    satellite = models.ForeignKey(to=Satellite, verbose_name='Спутник', related_name='points', null=True, on_delete=models.DO_NOTHING)
+    satellite = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Спутник', related_name='points', null=True, on_delete=models.DO_NOTHING)
     mag = models.FloatField('Звездная велечина')
     dt = models.DateTimeField('Дата и время снимка')
     jdn = models.IntegerField('Юлианская дата снимка')
