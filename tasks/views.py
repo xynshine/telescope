@@ -2,6 +2,7 @@ from datetime import datetime
 import locale
 import pytz
 import julian
+from django.db.models import Q
 
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
@@ -208,6 +209,16 @@ class UserTaskCreateView(generics.CreateAPIView):
         inputtask = serializer.save(self.request.user)
         return Response(data={
             'msg': f'Задание №{inputtask.id} успешно создано',
+            'status': 'ok'
+        })
+
+
+def get_task_confirm(request, task_id):
+    task = get_object_or_404(Task, Q(id=task_id, author=request.user, status=Task.DRAFT))
+    task.status = Task.CREATED
+    task.save()
+    return JsonResponse(data={
+            'msg': f'Задание №{task.id} успешно обновлено',
             'status': 'ok'
         })
 
