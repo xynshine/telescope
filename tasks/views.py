@@ -193,7 +193,7 @@ class UserTasks(generics.ListAPIView):
     serializer_class = TaskSerializer
 
     def get_queryset(self):
-        return Task.objects.filter(author=self.request.user).order_by('-created_at')
+        return Task.objects.filter(author=self.request.user).order_by('-id')
 
 
 class UserTaskCreateView(generics.CreateAPIView):

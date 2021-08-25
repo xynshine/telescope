@@ -108,7 +108,7 @@ class Task(models.Model):
         verbose_name_plural = 'Задания'
 
     def __str__(self):
-        return f'{self.get_task_type_display()} (id={self.id}) от {self.author.get_full_name()} за {self.get_created_at_display()}'
+        return f'{self.created_at.strftime("%Y-%m-%d %H:%M")} от {self.author.get_full_name()}: {self.get_task_type_display()}'
 
 
 class Frame(models.Model):
