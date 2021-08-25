@@ -69,7 +69,7 @@ class InputData(models.Model):
         verbose_name_plural = 'Входные данные'
 
     def __str__(self):
-        return f'{self.get_data_type_display()} (id={self.id}) от {self.author.get_full_name()} за {self.created_at.strftime("%d %b %Y, %H:%M")}'
+        return f'{self.created_at.strftime("%Y-%m-%d %H:%M")} от {self.author.get_full_name()}: {self.get_data_type_display()}'
 
 
 class Task(models.Model):

@@ -56,7 +56,7 @@ class InputDataView(generics.ListAPIView):
     serializer_class = InputDataSerializer
 
     def get_queryset(self):
-        return InputData.objects.filter(author=self.request.user)
+        return InputData.objects.filter(author=self.request.user).order_by('-id')
 
 
 class InputDataCreateView(generics.CreateAPIView):
