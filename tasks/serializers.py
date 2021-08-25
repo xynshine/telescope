@@ -368,7 +368,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ('id', 'status', 'author', 'created_at', 'telescope', 'task_type', 'input_data', 'start_dt', 'end_dt', 'jdn', 'start_jd', 'end_jd', 'url')
+        fields = ('id', 'status', 'author', 'created_at', 'telescope', 'task_type', 'start_dt', 'end_dt', 'jdn', 'start_jd', 'end_jd', 'url')
 
 
 class TaskResultSerializer(serializers.ModelSerializer):
