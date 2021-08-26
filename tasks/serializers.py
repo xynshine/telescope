@@ -54,6 +54,10 @@ class SatelliteSerializer(serializers.ModelSerializer):
 
 
 class InputDataSerializer(serializers.ModelSerializer):
+    task = serializers.PrimaryKeyRelatedField(
+        many=False, queryset=Task.objects.filter(status=Task.DRAFT)
+    )
+
     def validate_status(self, status):
         if not status == Task.DRAFT:
             raise serializers.ValidationError({"task": "status should be DRAFT"})
