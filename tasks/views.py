@@ -268,3 +268,19 @@ def get_telescope_plan(request, telescope_id, task_id):
         data['TLE'] = tle_data
     return JsonResponse({'plan': data})
 
+
+def get_telescope_tasks(request, telescope_id, jdn=None):
+    plan = {}
+    telescope = get_object_or_404(Telescope, id=telescope_id)
+    plan['telescope'] = telescope.to_dict()
+    plan['telescope']['avatar'] = None
+    tasks = Task.objects.filter(Q(
+        status=Task.CREATED,
+        telescope_id=telescope_id,
+        jdn=jdn
+    ))
+    plan['tasks'] = []
+    for task in tasks:
+        plan['tasks'].append(task.to_dict())
+    return JsonResponse({"plan": plan})
+

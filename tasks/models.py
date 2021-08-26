@@ -35,6 +35,12 @@ class Telescope(models.Model):
         balance = self.balances.filter(user=user).first()
         return balance.minutes if balance else 0
 
+    def to_dict(self):
+        data = {}
+        for f in self._meta.concrete_fields:
+            data[f.name] = f.value_from_object(self)
+        return data
+
 
 class Satellite(models.Model):
     number = models.IntegerField('Номер спутника', unique=True)
@@ -84,6 +90,12 @@ class Task(models.Model):
 
     def __str__(self):
         return f'{self.created_at.strftime("%Y-%m-%d %H:%M")} от {self.author.get_full_name()}: {self.get_task_type_display()} ({self.get_status_display()})'
+
+    def to_dict(self):
+        data = {}
+        for f in self._meta.concrete_fields:
+            data[f.name] = f.value_from_object(self)
+        return data
 
 
 class InputData(models.Model):
