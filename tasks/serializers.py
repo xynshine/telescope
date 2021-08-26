@@ -54,6 +54,13 @@ class SatelliteSerializer(serializers.ModelSerializer):
 
 
 class InputDataSerializer(serializers.ModelSerializer):
+    def validate_status(self, status):
+        if not status == Task.DRAFT:
+            raise serializers.ValidationError({"task": "status should be DRAFT"})
+
+    def validate(self, data):
+        self.validate_status(data['task'].status)
+        return data
 
     def save(self):
         data_type = InputData.NONE
@@ -61,6 +68,7 @@ class InputDataSerializer(serializers.ModelSerializer):
             data_type = InputData.TLE
         if self.validated_data.get('data_json') is not None:
             data_type = InputData.JSON
+        self.validate_status(self.validated_data.get('task').status)
         data = super().save(data_type=data_type)
         return data
 

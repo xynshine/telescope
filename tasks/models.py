@@ -83,7 +83,7 @@ class Task(models.Model):
         verbose_name_plural = 'Задания'
 
     def __str__(self):
-        return f'{self.created_at.strftime("%Y-%m-%d %H:%M")} от {self.author.get_full_name()}: {self.get_task_type_display()}'
+        return f'{self.created_at.strftime("%Y-%m-%d %H:%M")} от {self.author.get_full_name()}: {self.get_task_type_display()} ({self.get_status_display()})'
 
 
 class InputData(models.Model):
