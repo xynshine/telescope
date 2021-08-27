@@ -281,6 +281,20 @@ def get_telescope_tasks(request, telescope_id, jdn=None):
     ))
     plan['tasks'] = []
     for task in tasks:
-        plan['tasks'].append(task.to_dict())
+        t = task.to_dict()
+        t_type = ''
+        if task.task_type == Task.POINTS_MODE:
+            t_type = 'points'
+        elif task.task_type == Task.TRACKING_MODE:
+            t_type = 'tracking'
+        t[t_type] = []
+        t['tle'] = []
+        input_jsons = InputData.objects.filter(task=task)
+        for input_json in input_jsons:
+            if input_json.data_type == InputData.JSON:
+                t[t_type].append(input_json.data_json)
+            if len(input_json.data_tle) > 0:
+                t['tle'].append(input_json.data_tle)
+        plan['tasks'].append(t)
     return JsonResponse({"plan": plan})
 
