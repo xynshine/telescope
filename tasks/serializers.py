@@ -62,17 +62,22 @@ class InputDataSerializer(serializers.ModelSerializer):
         if not status == Task.DRAFT:
             raise serializers.ValidationError({"task": "status should be DRAFT"})
 
+    def validate_user(self, user, author):
+        if not user == author:
+            raise serializers.ValidationError({"task": "user should be author"})
+
     def validate(self, data):
         self.validate_status(data['task'].status)
         return data
 
-    def save(self):
+    def save(self, user):
         data_type = InputData.NONE
         if len(self.validated_data.get('data_tle')) > 0:
             data_type = InputData.TLE
         if self.validated_data.get('data_json') is not None:
             data_type = InputData.JSON
         self.validate_status(self.validated_data.get('task').status)
+        self.validate_user(user, self.validated_data.get('task').author)
         data = super().save(data_type=data_type)
         return data
 
@@ -85,7 +90,7 @@ class PointSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Point
-        fields = ('alpha', 'beta', 'cs_type', 'dt', 'exposure', 'mag', 'satellite_id')
+        fields = ('alpha', 'beta', 'cs_type', 'dt', 'exposure', 'mag', 'satellite', 'task', 'jdn', 'jd')
 
 
 class TrackingDataSerializer(serializers.ModelSerializer):
