@@ -185,24 +185,57 @@ class TLEData(models.Model):
         return 'Без заголовка'
 
 
-class Point(models.Model):
+class AbstractSpherePoint(models.Model):
     EARTH_SYSTEM = 0
     STARS_SYSTEM = 1
     SYSTEM_CHOICES = (
         (EARTH_SYSTEM, 'Земная система координат'),
         (STARS_SYSTEM, 'Звездная система координат'),
     )
+    alpha = models.FloatField('Азимут в градусах')
+    beta = models.FloatField('Угол места в градусах')
+
+    class Meta:
+        abstract = True
+        verbose_name = 'Точка'
+        verbose_name_plural = 'Точки'
+
+    def __str__(self):
+        return f'{self.alpha}°; {self.beta}°'
+
+
+class AbstractTimeMoment(models.Model):
+    dt = models.DateTimeField('Дата и время')
+    jdn = models.IntegerField('Юлианская дата')
+    jd = models.FloatField('Юлианское время')
+
+    class Meta:
+        abstract = True
+        verbose_name = 'Момент времени'
+        verbose_name_plural = 'Моменты времени'
+
+    def __str__(self):
+        return f'{self.get_dt_display()}'
+
+
+class AbstractImageFrame(models.Model):
+    exposure = models.FloatField('Выдержка снимка в секундах')
+
+    class Meta:
+        abstract = True
+        verbose_name = 'Кадр'
+        verbose_name_plural = 'Кадры'
+
+    def __str__(self):
+        return f'{self.exposure} с'
+
+
+class Point(AbstractSpherePoint, AbstractTimeMoment, AbstractImageFrame):
     id = models.BigAutoField(primary_key=True)
     task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='points', on_delete=models.DO_NOTHING)
     satellite = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Спутник', related_name='points', null=True, on_delete=models.DO_NOTHING)
     mag = models.FloatField('Звездная велечина')
-    dt = models.DateTimeField('Дата и время снимка')
-    jdn = models.IntegerField('Юлианская дата снимка')
-    jd = models.FloatField('Юлианское время снимка')
-    alpha = models.FloatField('Азимут')
-    beta = models.FloatField('Угол места')
-    exposure = models.FloatField('Требуемая выдержка снимка')
-    cs_type = models.SmallIntegerField('Система координат', choices=SYSTEM_CHOICES, default=EARTH_SYSTEM)
+    cs_type = models.SmallIntegerField('Система координат', choices=AbstractSpherePoint.SYSTEM_CHOICES, default=AbstractSpherePoint.EARTH_SYSTEM)
 
     class Meta:
         verbose_name = 'Точка для снимка'
