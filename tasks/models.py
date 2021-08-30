@@ -107,7 +107,7 @@ class InputData(models.Model):
         (TLE, 'Элементы орбит в формате TLE'),
         (JSON, 'Массив точек в формате JSON'),
     )
-    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='tasks_inputdata', unique=True, on_delete=models.CASCADE)
+    task = models.OneToOneField(Task, verbose_name='Задание', related_name='tasks_inputdata', on_delete=models.CASCADE)
     expected_sat = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Ожидаемый спутник', related_name='tasks_inputdata', null=True, on_delete=models.DO_NOTHING)
     data_type = models.SmallIntegerField('Тип данных', choices=TYPE_CHOICES, editable=False)
     data_tle = models.TextField('Данные в формате TLE', blank=True)
