@@ -192,6 +192,7 @@ class Point(models.Model):
         (EARTH_SYSTEM, 'Земная система координат'),
         (STARS_SYSTEM, 'Звездная система координат'),
     )
+    id = models.BigAutoField(primary_key=True)
     task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='points', on_delete=models.DO_NOTHING)
     satellite = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Спутник', related_name='points', null=True, on_delete=models.DO_NOTHING)
     mag = models.FloatField('Звездная велечина')
