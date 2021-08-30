@@ -70,6 +70,41 @@ class InputDataCreateView(generics.CreateAPIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
         inputdata = serializer.save(self.request.user)
+        if inputdata.data_type == InputData.JSON:
+            min_jd = 1.0
+            max_jd = 0.0
+            jdn = 0
+            if inputdata.task.task_type == Task.POINTS_MODE:
+                points = inputdata.data_json
+                for point in points:
+                    point['dt'] = julian.from_jd(point['jd'])
+                    point['jdn'] = int(point['jd'])
+                    point['jd'] = point['jd'] - point['jdn']
+                    if min_jd > point['jd']:
+                        min_jd = point['jd']
+                    if max_jd < point['jd']:
+                        max_jd = point['jd']
+                    jdn = point['jdn']
+                    point['task'] = inputdata.task.id
+                    point['satellite'] = inputdata.expected_sat.number
+                    point_serializer = PointSerializer(data=point)
+                    if not point_serializer.is_valid():
+                        return Response(point_serializer.errors, status=400)
+                    point_serializer.save(self.request.user)
+            elif inputdata.task.task_type == Task.TRACKING_MODE:
+                return Response(serializer.errors, status=501)
+            else:
+                return Response(serializer.errors, status=400)
+            inputdata.task.start_jd = min_jd + jdn
+            inputdata.task.start_dt = julian.from_jd(min_jd + jdn)
+            inputdata.task.end_jd = max_jd + jdn
+            inputdata.task.end_dt = julian.from_jd(max_jd + jdn)
+            inputdata.task.jdn = jdn
+            inputdata.task.save()
+        elif inputdata.data_type == InputData.TLE:
+            return Response(serializer.errors, status=501)
+        else:
+            return Response(serializer.errors, status=400)
         return Response(data={
             'msg': f'Входные данные №{inputdata.id} успешно созданы',
             'status': 'ok'
