@@ -76,6 +76,7 @@ class InputDataCreateView(generics.CreateAPIView):
         })
 
 
+"""
 class PointTaskView(generics.CreateAPIView):
     queryset = Task.objects.filter(task_type=Task.POINTS_MODE)
     serializer_class = PointTaskSerializer
@@ -100,8 +101,10 @@ class PointTaskView(generics.CreateAPIView):
             return Response(data={'msg': f'Задание №{point_task.id} успешно создано, на этом телескопе осталось {balance.minutes} минут для наблюдений', 'status': 'ok'})
         except Balance.DoesNotExist:
             return Response(data={'msg': f'Ошибка создания задания, нет доступа к данному телескопу', 'status': 'error'}, status=400)
+"""
 
 
+"""
 class TrackingTaskView(generics.CreateAPIView):
     queryset = Task.objects.filter(task_type=Task.TRACKING_MODE)
     serializer_class = TrackingTaskSerializer
@@ -128,6 +131,7 @@ class TrackingTaskView(generics.CreateAPIView):
                 'status': 'ok'})
         except Balance.DoesNotExist:
             return Response(data={'msg': f'Ошибка создания задания, нет доступа к данному телескопу', 'status': 'error'}, status=400)
+"""
 
 
 '''
@@ -297,4 +301,3 @@ def get_telescope_tasks(request, telescope_id, jdn=None):
                 t['tle'].append(input_json.data_tle)
         plan['tasks'].append(t)
     return JsonResponse({"plan": plan})
-
