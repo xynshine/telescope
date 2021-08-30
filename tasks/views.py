@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, Balance
 from tasks.serializers import (
     TelescopeSerializer, TelescopeBalanceSerializer, PointTaskSerializer,
-    SatelliteSerializer, InputDataSerializer,
+    SatelliteSerializer, InputDataSerializer, PointSerializer,
     TrackingTaskSerializer, TleTaskSerializer, BalanceRequestSerializer,
     BalanceRequestCreateSerializer, TaskSerializer, TaskResultSerializer
 )

@@ -87,6 +87,27 @@ class InputDataSerializer(serializers.ModelSerializer):
 
 
 class PointSerializer(serializers.ModelSerializer):
+    task = serializers.PrimaryKeyRelatedField(
+        many=False, queryset=Task.objects.filter(status=Task.DRAFT)
+    )
+
+    def validate_status(self, status):
+        if not status == Task.DRAFT:
+            raise serializers.ValidationError({"task": "status should be DRAFT"})
+
+    def validate_user(self, user, author):
+        if not user == author:
+            raise serializers.ValidationError({"task": "user should be author"})
+
+    def validate(self, data):
+        self.validate_status(data['task'].status)
+        return data
+
+    def save(self, user):
+        self.validate_status(self.validated_data.get('task').status)
+        self.validate_user(user, self.validated_data.get('task').author)
+        data = super().save()
+        return data
 
     class Meta:
         model = Point
