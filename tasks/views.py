@@ -86,7 +86,10 @@ class InputDataCreateView(generics.CreateAPIView):
                         max_jd = point['jd']
                     jdn = point['jdn']
                     point['task'] = inputdata.task.id
-                    point['satellite'] = inputdata.expected_sat.number
+                    if inputdata.expected_sat:
+                        point['satellite'] = inputdata.expected_sat.number
+                    else:
+                        point['satellite'] = None
                     point_serializer = PointSerializer(data=point)
                     if not point_serializer.is_valid():
                         return Response(point_serializer.errors, status=400)
