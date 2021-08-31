@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import models
 from django.conf import settings
 
@@ -139,6 +141,22 @@ class AbstractSpherePoint(models.Model):
     def __str__(self):
         return f'{self.alpha}°; {self.beta}°'
 
+    @staticmethod
+    def validate_point(point):
+        if point is not None:
+            alpha = point.get('alpha', None)
+            beta = point.get('beta', None)
+            try:
+                f_alpha = float(alpha)
+                f_beta = float(beta)
+                if f_alpha < 0.0 or f_alpha > 360.0 or f_beta < 0.0 or f_beta > 90.0:
+                    return False
+            except ValueError:
+                return False
+        else:
+            return False
+        return True
+
 
 class AbstractTimeMoment(models.Model):
     dt = models.DateTimeField('Дата и время')
@@ -153,6 +171,27 @@ class AbstractTimeMoment(models.Model):
     def __str__(self):
         return f'{self.get_dt_display()}'
 
+    @staticmethod
+    def validate_moment(moment):
+        if moment is not None:
+            dt = moment.get('dt', None)
+            jdn = moment.get('jdn', None)
+            jd = moment.get('jd', None)
+            try:
+                f_jdn = int(jdn)
+                f_jd = float(jd)
+                if not isinstance(dt, datetime):
+                    return False
+                if f_jd < 0.0 or not f_jd < 1.0:
+                    return False
+                if f_jdn == 0:
+                    return False
+            except ValueError:
+                return False
+        else:
+            return False
+        return True
+
 
 class AbstractImageFrame(models.Model):
     exposure = models.FloatField('Выдержка снимка в мс')
@@ -164,6 +203,20 @@ class AbstractImageFrame(models.Model):
 
     def __str__(self):
         return f'{self.exposure} мс'
+
+    @staticmethod
+    def validate_frame(frame):
+        if frame is not None:
+            exposure = frame.get('exposure', None)
+            try:
+                f_exposure = float(exposure)
+                if f_exposure < 0.0:
+                    return False
+            except ValueError:
+                return False
+        else:
+            return False
+        return True
 
 
 class Frame(AbstractTimeMoment, AbstractImageFrame):
