@@ -403,7 +403,7 @@ class TaskSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"telescope": "telescope should be enabled"})
 
     def validate_ttype(self, ttype):
-        if Task.TYPE_CHOICES[ttype] is None:
+        if ttype not in {Task.POINTS_MODE, Task.TRACKING_MODE}:
             raise serializers.ValidationError({"task_type": "invalid task type"})
 
     def validate(self, data):
