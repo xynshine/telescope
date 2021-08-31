@@ -155,7 +155,7 @@ class AbstractTimeMoment(models.Model):
 
 
 class AbstractImageFrame(models.Model):
-    exposure = models.FloatField('Выдержка снимка в секундах')
+    exposure = models.FloatField('Выдержка снимка в мс')
 
     class Meta:
         abstract = True
@@ -163,7 +163,7 @@ class AbstractImageFrame(models.Model):
         verbose_name_plural = 'Кадры'
 
     def __str__(self):
-        return f'{self.exposure} с'
+        return f'{self.exposure} мс'
 
 
 class Frame(AbstractTimeMoment, AbstractImageFrame):
@@ -175,7 +175,7 @@ class Frame(AbstractTimeMoment, AbstractImageFrame):
         verbose_name_plural = 'Фреймы (выдержка + время снимка)'
 
     def __str__(self):
-        return f'{self.exposure} с; {self.get_dt_display()}'
+        return f'{self.exposure} мс; {self.get_dt_display()}'
 
 
 class TrackPoint(AbstractSpherePoint, AbstractTimeMoment):
@@ -236,7 +236,7 @@ class Point(AbstractSpherePoint, AbstractTimeMoment, AbstractImageFrame):
         verbose_name_plural = 'Точки для снимков'
 
     def __str__(self):
-        return f'{self.satellite}; {self.alpha}°; {self.beta}°; {self.exposure} с; {self.get_dt_display()}'
+        return f'{self.satellite}; {self.alpha}°; {self.beta}°; {self.exposure} мс; {self.get_dt_display()}'
 
 
 class Balance(models.Model):
