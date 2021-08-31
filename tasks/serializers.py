@@ -67,7 +67,7 @@ class InputDataSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"task": "user should be author"})
 
     def validate(self, data):
-        self.validate_status(data['task'].status)
+        self.validate_status(data.get('task', None).status)
         return data
 
     def save(self, user):
@@ -100,7 +100,7 @@ class PointSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"task": "user should be author"})
 
     def validate(self, data):
-        self.validate_status(data['task'].status)
+        self.validate_status(data.get('task', None).status)
         return data
 
     def save(self, user):
@@ -400,15 +400,16 @@ class TaskSerializer(serializers.ModelSerializer):
         if obj.status == Task.READY:
             return f'{obj.id}/results/'
 
-    def validate_telescope(self, telescope):
-        if not telescope.enabled:
-            raise serializers.ValidationError({"task": "user should be author"})
+    def validate_enabled(self, enabled):
+        if not enabled:
+            raise serializers.ValidationError({"telescope": "telescope should be enabled"})
 
     def validate(self, data):
-        self.validate_telescope(data['telescope'])
+        self.validate_enabled(data.get('telescope', None).enabled)
         return data
 
     def save(self, user):
+        self.validate_enabled(self.validated_data.get('telescope').enabled)
         task = super().save(author=user)
         return task
 
