@@ -111,35 +111,35 @@ class PointSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Point
-        fields = ('alpha', 'beta', 'cs_type', 'dt', 'exposure', 'mag', 'satellite', 'task', 'jdn', 'jd')
+        fields = ('id', 'alpha', 'beta', 'cs_type', 'dt', 'exposure', 'mag', 'satellite', 'task', 'jdn', 'jd')
 
 
 class TrackingDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TrackingData
-        fields = ('satellite_id', 'mag', 'step_sec', 'count')
+        fields = ('id', 'task', 'cs_type', 'satellite_id', 'mag', 'step_sec', 'count')
 
 
 class TleDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TLEData
-        fields = ('satellite_id', 'line1', 'line2')
+        fields = ('id', 'task', 'satellite_id', 'header', 'line1', 'line2')
 
 
 class TrackPointSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TrackPoint
-        fields = ('alpha', 'beta', 'dt')
+        fields = ('id', 'task', 'alpha', 'beta', 'dt', 'jdn', 'jd')
 
 
 class FrameSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Frame
-        fields = ('exposure', 'dt')
+        fields = ('id', 'task', 'exposure', 'dt', 'jdn', 'jd')
 
 
 class PointTaskSerializer(serializers.ModelSerializer):
