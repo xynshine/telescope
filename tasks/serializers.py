@@ -400,6 +400,14 @@ class TaskSerializer(serializers.ModelSerializer):
         if obj.status == Task.READY:
             return f'{obj.id}/results/'
 
+    def validate_telescope(self, telescope):
+        if not telescope.enabled:
+            raise serializers.ValidationError({"task": "user should be author"})
+
+    def validate(self, data):
+        self.validate_telescope(data['telescope'])
+        return data
+
     def save(self, user):
         task = super().save(author=user)
         return task
