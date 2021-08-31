@@ -404,12 +404,18 @@ class TaskSerializer(serializers.ModelSerializer):
         if not enabled:
             raise serializers.ValidationError({"telescope": "telescope should be enabled"})
 
+    def validate_ttype(self, ttype):
+        if Task.TYPE_CHOICES[ttype] is None:
+            raise serializers.ValidationError({"task_type": "invalid task type"})
+
     def validate(self, data):
         self.validate_enabled(data.get('telescope', None).enabled)
+        self.validate_ttype(data.get('task_type', None))
         return data
 
     def save(self, user):
         self.validate_enabled(self.validated_data.get('telescope').enabled)
+        self.validate_ttype(self.validated_data.get('task_type'))
         task = super().save(author=user)
         return task
 
