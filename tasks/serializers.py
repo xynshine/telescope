@@ -76,7 +76,6 @@ class InputDataSerializer(serializers.ModelSerializer):
             data_type = InputData.TLE
         if self.validated_data.get('data_json') is not None:
             data_type = InputData.JSON
-        self.validate_status(self.validated_data.get('task').status)
         self.validate_user(user, self.validated_data.get('task').author)
         data = super().save(data_type=data_type)
         return data
@@ -104,7 +103,6 @@ class PointSerializer(serializers.ModelSerializer):
         return data
 
     def save(self, user):
-        self.validate_status(self.validated_data.get('task').status)
         self.validate_user(user, self.validated_data.get('task').author)
         data = super().save()
         return data
@@ -414,8 +412,6 @@ class TaskSerializer(serializers.ModelSerializer):
         return data
 
     def save(self, user):
-        self.validate_enabled(self.validated_data.get('telescope').enabled)
-        self.validate_ttype(self.validated_data.get('task_type'))
         task = super().save(author=user)
         return task
 
