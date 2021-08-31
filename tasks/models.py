@@ -166,12 +166,9 @@ class AbstractImageFrame(models.Model):
         return f'{self.exposure} с'
 
 
-class Frame(models.Model):
+class Frame(AbstractTimeMoment, AbstractImageFrame):
+    id = models.BigAutoField(primary_key=True)
     task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='frames', on_delete=models.DO_NOTHING)
-    exposure = models.FloatField('Требуемая выдержка снимка')
-    dt = models.DateTimeField('Дата и время снимка')
-    jdn = models.IntegerField('Юлианская дата снимка')
-    jd = models.FloatField('Юлианское время снимка')
 
     class Meta:
         verbose_name = 'Фрейм'
@@ -181,13 +178,9 @@ class Frame(models.Model):
         return f'{self.exposure} с; {self.get_dt_display()}'
 
 
-class TrackPoint(models.Model):
+class TrackPoint(AbstractSpherePoint, AbstractTimeMoment):
+    id = models.BigAutoField(primary_key=True)
     task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='track_points', on_delete=models.DO_NOTHING)
-    alpha = models.FloatField('Азимут')
-    beta = models.FloatField('Угол места')
-    dt = models.DateTimeField('Дата и время снимка')
-    jdn = models.IntegerField('Юлианская дата снимка')
-    jd = models.FloatField('Юлианское время снимка')
 
     class Meta:
         verbose_name = 'Точка для трекинга'
@@ -200,6 +193,7 @@ class TrackPoint(models.Model):
 class TrackingData(models.Model):
     task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='tracking_data', on_delete=models.DO_NOTHING)
     satellite = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Спутник', related_name='tracking_data', null=True, on_delete=models.DO_NOTHING)
+    cs_type = models.SmallIntegerField('Система координат', choices=AbstractSpherePoint.SYSTEM_CHOICES, default=AbstractSpherePoint.EARTH_SYSTEM)
     mag = models.FloatField('Звездная велечина')
     step_sec = models.FloatField('Шаг по времени', default=1)
     count = models.IntegerField('Количество снимков', default=20)
