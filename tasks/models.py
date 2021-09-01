@@ -1,4 +1,5 @@
 from datetime import datetime
+from julian import julian
 
 from django.db import models
 from django.conf import settings
@@ -201,6 +202,12 @@ class AbstractTimeMoment(models.Model):
         else:
             return False
         return True
+
+    @staticmethod
+    def dt_to_jdn_jdf(dt: datetime):
+        jdn = int(julian.to_jd(dt))
+        jdf = (dt.hour - 12) / 24 + dt.minute / 1440 + dt.second / 86400 + dt.microsecond / 86400000000
+        return jdn, jdf
 
 
 class AbstractImageFrame(models.Model):

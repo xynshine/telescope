@@ -10,7 +10,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 
 
-from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, Balance
+from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, Balance, AbstractTimeMoment
 from tasks.serializers import (
     TelescopeSerializer, TelescopeBalanceSerializer, PointTaskSerializer,
     SatelliteSerializer, InputDataSerializer, PointSerializer,
@@ -71,20 +71,28 @@ class InputDataCreateView(generics.CreateAPIView):
             return Response(serializer.errors, status=400)
         inputdata = serializer.save(self.request.user)
         if inputdata.data_type == InputData.JSON:
+            min_dt = datetime.max.replace(tzinfo=pytz.UTC)
+            max_dt = datetime.min.replace(tzinfo=pytz.UTC)
             min_jd = 1.0
             max_jd = 0.0
-            jdn = 0
+            min_jdn = 2147483647
             if inputdata.task.task_type == Task.POINTS_MODE:
                 points = inputdata.data_json
                 for point in points:
-                    point['dt'] = julian.from_jd(point['jd'])
-                    point['jdn'] = int(point['jd'])
-                    point['jd'] = point['jd'] - point['jdn']
-                    if min_jd > point['jd']:
-                        min_jd = point['jd']
-                    if max_jd < point['jd']:
-                        max_jd = point['jd']
-                    jdn = point['jdn']
+                    dt = datetime.strptime(point['dt'], DT_FORMAT).replace(tzinfo=pytz.UTC)
+                    if min_dt > dt:
+                        min_dt = dt
+                    if max_dt < dt:
+                        max_dt = dt
+                    jdn, jdf = AbstractTimeMoment.dt_to_jdn_jdf(dt)
+                    point['jdn'] = jdn
+                    if min_jdn > jdn:
+                        min_jdn = jdn
+                    point['jd'] = jdf
+                    if min_jd > jdf:
+                        min_jd = jdf
+                    if max_jd < jdf:
+                        max_jd = jdf
                     point['task'] = inputdata.task.id
                     if inputdata.expected_sat:
                         point['satellite'] = inputdata.expected_sat.number
