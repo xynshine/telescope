@@ -55,6 +55,22 @@ class SatelliteSerializer(serializers.ModelSerializer):
         fields = ('id', 'number', 'name')
 
 
+class PointSerializer(serializers.ModelSerializer):
+
+    def validate(self, data):
+        if not Point.validate_point(data, data.get('cs_type', None)):
+            raise serializers.ValidationError({"alpha": "invalid point coordinates"})
+        if not Point.validate_frame(data):
+            raise serializers.ValidationError({"exposure": "invalid frame exposure"})
+        if not Point.validate_moment(data, datetime.now(tz=pytz.UTC)):
+            raise serializers.ValidationError({"dt": "invalid time moment"})
+        return data
+
+    class Meta:
+        model = Point
+        fields = ('id', 'alpha', 'beta', 'cs_type', 'dt', 'exposure', 'mag', 'satellite', 'task', 'jdn', 'jd')
+
+
 class InputDataSerializer(serializers.ModelSerializer):
     task = serializers.PrimaryKeyRelatedField(
         many=False, queryset=Task.objects.filter(status=Task.DRAFT)
@@ -85,22 +101,6 @@ class InputDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = InputData
         fields = ('id', 'task', 'expected_sat', 'data_type', 'data_tle', 'data_json')
-
-
-class PointSerializer(serializers.ModelSerializer):
-
-    def validate(self, data):
-        if not Point.validate_point(data, data.get('cs_type', None)):
-            raise serializers.ValidationError({"alpha": "invalid point coordinates"})
-        if not Point.validate_frame(data):
-            raise serializers.ValidationError({"exposure": "invalid frame exposure"})
-        if not Point.validate_moment(data, datetime.now(tz=pytz.UTC)):
-            raise serializers.ValidationError({"dt": "invalid time moment"})
-        return data
-
-    class Meta:
-        model = Point
-        fields = ('id', 'alpha', 'beta', 'cs_type', 'dt', 'exposure', 'mag', 'satellite', 'task', 'jdn', 'jd')
 
 
 class TrackingDataSerializer(serializers.ModelSerializer):
