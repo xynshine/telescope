@@ -88,31 +88,14 @@ class InputDataSerializer(serializers.ModelSerializer):
 
 
 class PointSerializer(serializers.ModelSerializer):
-    task = serializers.PrimaryKeyRelatedField(
-        many=False, queryset=Task.objects.filter(status=Task.DRAFT)
-    )
-
-    def validate_status(self, status):
-        if not status == Task.DRAFT:
-            raise serializers.ValidationError({"task": "status should be DRAFT"})
-
-    def validate_user(self, user, author):
-        if not user == author:
-            raise serializers.ValidationError({"task": "user should be author"})
 
     def validate(self, data):
-        self.validate_status(data.get('task', None).status)
         if not Point.validate_point(data, data.get('cs_type', None)):
             raise serializers.ValidationError({"alpha": "invalid point coordinates"})
         if not Point.validate_frame(data):
             raise serializers.ValidationError({"exposure": "invalid frame exposure"})
         if not Point.validate_moment(data, datetime.now(tz=pytz.UTC)):
             raise serializers.ValidationError({"dt": "invalid time moment"})
-        return data
-
-    def save(self, user):
-        self.validate_user(user, self.validated_data.get('task').author)
-        data = super().save()
         return data
 
     class Meta:
