@@ -89,10 +89,10 @@ class InputDataCreateView(generics.CreateAPIView):
                         point['satellite'] = inputdata.expected_sat.number
                     else:
                         point['satellite'] = None
-                    point_serializer = PointSerializer(data=point)
-                    if not point_serializer.is_valid():
-                        return Response(point_serializer.errors, status=400)
-                    point_serializer.save()
+                point_serializer = PointSerializer(data=points, many=True)
+                if not point_serializer.is_valid():
+                    return Response(point_serializer.errors, status=400)
+                point_serializer.save()
             elif inputdata.task.task_type == Task.TRACKING_MODE:
                 return Response(serializer.errors, status=501)
             else:
