@@ -106,11 +106,11 @@ class InputDataCreateView(generics.CreateAPIView):
                 return Response(serializer.errors, status=501)
             else:
                 return Response(serializer.errors, status=400)
-            inputdata.task.start_jd = min_jd + jdn
-            inputdata.task.start_dt = julian.from_jd(min_jd + jdn)
-            inputdata.task.end_jd = max_jd + jdn
-            inputdata.task.end_dt = julian.from_jd(max_jd + jdn)
-            inputdata.task.jdn = jdn
+            inputdata.task.start_jd = min_jd + min_jdn
+            inputdata.task.start_dt = min_dt
+            inputdata.task.end_jd = max_jd + min_jdn
+            inputdata.task.end_dt = max_dt
+            inputdata.task.jdn = min_jdn
             inputdata.task.save()
         elif inputdata.data_type == InputData.TLE:
             return Response(serializer.errors, status=501)
