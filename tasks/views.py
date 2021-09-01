@@ -73,9 +73,6 @@ class InputDataCreateView(generics.CreateAPIView):
         if inputdata.data_type == InputData.JSON:
             min_dt = datetime.max.replace(tzinfo=pytz.UTC)
             max_dt = datetime.min.replace(tzinfo=pytz.UTC)
-            min_jd = 1.0
-            max_jd = 0.0
-            min_jdn = 2147483647
             if inputdata.task.task_type == Task.POINTS_MODE:
                 points = inputdata.data_json
                 for point in points:
@@ -86,13 +83,7 @@ class InputDataCreateView(generics.CreateAPIView):
                         max_dt = dt
                     jdn, jdf = AbstractTimeMoment.dt_to_jdn_jdf(dt)
                     point['jdn'] = jdn
-                    if min_jdn > jdn:
-                        min_jdn = jdn
                     point['jd'] = jdf
-                    if min_jd > jdf:
-                        min_jd = jdf
-                    if max_jd < jdf:
-                        max_jd = jdf
                     point['task'] = inputdata.task.id
                     if inputdata.expected_sat:
                         point['satellite'] = inputdata.expected_sat.number
@@ -106,11 +97,13 @@ class InputDataCreateView(generics.CreateAPIView):
                 return Response(serializer.errors, status=501)
             else:
                 return Response(serializer.errors, status=400)
-            inputdata.task.start_jd = min_jd + jdn
-            inputdata.task.start_dt = julian.from_jd(min_jd + jdn)
-            inputdata.task.end_jd = max_jd + jdn
-            inputdata.task.end_dt = julian.from_jd(max_jd + jdn)
-            inputdata.task.jdn = jdn
+            jdn1, jdf1 = AbstractTimeMoment.dt_to_jdn_jdf(min_dt)
+            inputdata.task.start_dt = min_dt
+            inputdata.task.start_jd = jdf1 + jdn1
+            inputdata.task.jdn = jdn1
+            jdn2, jdf2 = AbstractTimeMoment.dt_to_jdn_jdf(max_dt)
+            inputdata.task.end_dt = max_dt
+            inputdata.task.end_jd = jdf2 + jdn2
             inputdata.task.save()
         elif inputdata.data_type == InputData.TLE:
             return Response(serializer.errors, status=501)
