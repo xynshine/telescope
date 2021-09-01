@@ -148,6 +148,7 @@ class FrameSerializer(serializers.ModelSerializer):
         fields = ('id', 'task', 'exposure', 'dt', 'jdn', 'jd')
 
 
+"""
 class PointTaskSerializer(serializers.ModelSerializer):
     telescope = serializers.CharField(source='telescope.id')
     points = PointSerializer(many=True)
@@ -208,8 +209,10 @@ class PointTaskSerializer(serializers.ModelSerializer):
         self.save_points(instance, points)
         instance.save()
         return instance
+"""
 
 
+"""
 class TrackingTaskSerializer(serializers.ModelSerializer):
     telescope = serializers.CharField(source='telescope.id')
     tracking_data = TrackingDataSerializer()
@@ -304,8 +307,10 @@ class TrackingTaskSerializer(serializers.ModelSerializer):
         self.save_frames(instance, frames)
         instance.save()
         return instance
+"""
 
 
+"""
 class TleTaskSerializer(serializers.ModelSerializer):
     telescope = serializers.CharField(source='telescope.id')
     tle_data = TleDataSerializer()
@@ -360,6 +365,7 @@ class TleTaskSerializer(serializers.ModelSerializer):
         instance.end_dt = max_dt
         instance.save()
         return instance
+"""
 
 
 class BalanceRequestSerializer(serializers.ModelSerializer):

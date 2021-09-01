@@ -12,9 +12,9 @@ from rest_framework.response import Response
 
 from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, Balance, AbstractTimeMoment
 from tasks.serializers import (
-    TelescopeSerializer, TelescopeBalanceSerializer, PointTaskSerializer,
+    TelescopeSerializer, TelescopeBalanceSerializer,
     SatelliteSerializer, InputDataSerializer, PointSerializer,
-    TrackingTaskSerializer, TleTaskSerializer, BalanceRequestSerializer,
+    BalanceRequestSerializer,
     BalanceRequestCreateSerializer, TaskSerializer, TaskResultSerializer
 )
 from tasks.helpers import telescope_collision_task_message, get_points_json, get_track_json, get_frames_json
