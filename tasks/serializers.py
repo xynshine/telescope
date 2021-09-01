@@ -79,10 +79,12 @@ class InputDataSerializer(serializers.ModelSerializer):
     def validate_status(self, status):
         if not status == Task.DRAFT:
             raise serializers.ValidationError({"task": "status should be DRAFT"})
+        return status
 
     def validate_user(self, user, author):
         if not user == author:
             raise serializers.ValidationError({"task": "user should be author"})
+        return user
 
     def validate(self, data):
         self.validate_status(data.get('task', None).status)
