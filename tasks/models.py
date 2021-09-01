@@ -30,9 +30,7 @@ class Telescope(models.Model):
         verbose_name_plural = 'Телескопы'
 
     def __str__(self):
-        if self.name:
-            return self.name
-        return f'Телескоп {self.id}'
+        return f'({self.code}) {self.name}'
 
     def get_user_balance(self, user):
         balance = self.balances.filter(user=user).first()
@@ -54,7 +52,7 @@ class Satellite(models.Model):
         verbose_name_plural = 'Спутники'
 
     def __str__(self):
-        return f'{self.number} "{self.name}"'
+        return f'({self.number}) {self.name}'
 
 
 class Task(models.Model):
@@ -92,7 +90,7 @@ class Task(models.Model):
         verbose_name_plural = 'Задания'
 
     def __str__(self):
-        return f'{self.created_at.strftime("%Y-%m-%d %H:%M")} от {self.author.get_full_name()}: {self.get_task_type_display()} ({self.get_status_display()})'
+        return f'({self.id}) за {self.created_at.strftime("%Y-%m-%d %H:%M")} от {self.author.get_full_name()}: {self.get_task_type_display()} ({self.get_status_display()})'
 
     def to_dict(self):
         data = {}
@@ -121,7 +119,7 @@ class InputData(models.Model):
         verbose_name_plural = 'Входные данные'
 
     def __str__(self):
-        return f'{self.get_data_type_display()} по {self.expected_sat} для {self.task}'
+        return f'({self.id}) {self.get_data_type_display()} по {self.expected_sat} для {self.task}'
 
 
 class AbstractSpherePoint(models.Model):
