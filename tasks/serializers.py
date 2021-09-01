@@ -1,5 +1,7 @@
 import locale
+from datetime import datetime
 
+import pytz
 from rest_framework import serializers
 from telescope.settings import SITE_URL, MEDIA_URL
 from tasks.models import Telescope, Satellite, InputData, Point, Task, TrackPoint, Frame, TrackingData, TLEData, BalanceRequest, TaskResult
@@ -100,6 +102,12 @@ class PointSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         self.validate_status(data.get('task', None).status)
+        if not Point.validate_point(data, data.get('cs_type', None)):
+            raise serializers.ValidationError({"alpha": "invalid point coordinates"})
+        if not Point.validate_frame(data):
+            raise serializers.ValidationError({"exposure": "invalid frame exposure"})
+        if not Point.validate_moment(data, datetime.now(tz=pytz.UTC)):
+            raise serializers.ValidationError({"dt": "invalid time moment"})
         return data
 
     def save(self, user):
