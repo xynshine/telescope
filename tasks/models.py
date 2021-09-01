@@ -142,14 +142,22 @@ class AbstractSpherePoint(models.Model):
         return f'{self.alpha}°; {self.beta}°'
 
     @staticmethod
-    def validate_point(point):
+    def validate_point(point, cs_type: SYSTEM_CHOICES):
         if point is not None:
             alpha = point.get('alpha', None)
             beta = point.get('beta', None)
             try:
                 f_alpha = float(alpha)
                 f_beta = float(beta)
-                if f_alpha < 0.0 or f_alpha > 360.0 or f_beta < 0.0 or f_beta > 90.0:
+                if f_alpha < 0.0 or f_alpha > 360.0:
+                    return False
+                if cs_type == AbstractSpherePoint.EARTH_SYSTEM:
+                    if f_beta < 0.0 or f_beta > 90.0:
+                        return False
+                elif cs_type == AbstractSpherePoint.STARS_SYSTEM:
+                    if f_beta < 0.0 or f_beta > 180.0:
+                        return False
+                else:
                     return False
             except ValueError:
                 return False
@@ -172,7 +180,7 @@ class AbstractTimeMoment(models.Model):
         return f'{self.get_dt_display()}'
 
     @staticmethod
-    def validate_moment(moment):
+    def validate_moment(moment, now: datetime):
         if moment is not None:
             dt = moment.get('dt', None)
             jdn = moment.get('jdn', None)
@@ -185,6 +193,8 @@ class AbstractTimeMoment(models.Model):
                 if f_jd < 0.0 or not f_jd < 1.0:
                     return False
                 if f_jdn == 0:
+                    return False
+                if not dt > now:
                     return False
             except ValueError:
                 return False
