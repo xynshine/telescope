@@ -48,11 +48,11 @@ class Satellite(models.Model):
     name = models.TextField('Название спутника', blank=True)
 
     class Meta:
-        verbose_name = 'Спутник'
-        verbose_name_plural = 'Спутники'
+        verbose_name = 'Космический объект'
+        verbose_name_plural = 'Космические объекты'
 
     def __str__(self):
-        return f'({self.number}) {self.name}'
+        return f'({self.number}) "{self.name}"'
 
 
 class Task(models.Model):
@@ -90,7 +90,7 @@ class Task(models.Model):
         verbose_name_plural = 'Задания'
 
     def __str__(self):
-        return f'({self.id}) за {self.created_at.strftime("%Y-%m-%d %H:%M")} от {self.author.get_full_name()}: {self.get_task_type_display()} ({self.get_status_display()})'
+        return f'({self.id}) за {self.created_at.strftime("%Y-%m-%d %H:%M")} от пользователя {self.author.get_full_name()}: {self.get_task_type_display()} ({self.get_status_display()})'
 
     def to_dict(self):
         data = {}
@@ -119,7 +119,7 @@ class InputData(models.Model):
         verbose_name_plural = 'Входные данные'
 
     def __str__(self):
-        return f'({self.id}) {self.get_data_type_display()} по {self.expected_sat} для {self.task}'
+        return f'({self.id}) {self.get_data_type_display()} по космическому объекту {self.expected_sat} для задания {self.task}'
 
 
 class AbstractSpherePoint(models.Model):
