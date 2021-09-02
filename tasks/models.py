@@ -476,13 +476,14 @@ class BalanceRequest(models.Model):
 
 
 class TaskResult(models.Model):
+    id = models.BigAutoField(primary_key=True)
     task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='results', on_delete=models.DO_NOTHING)
     image = models.ImageField('Снимок', null=True, blank=True, upload_to='results')
-    point = models.ForeignKey(to=Point, verbose_name='Точка', related_name='result', null=True, on_delete=models.DO_NOTHING)
-    frame = models.ForeignKey(to=Frame, verbose_name='Фрейм', related_name='result', null=True, on_delete=models.DO_NOTHING)
+    point = models.OneToOneField(to=Point, verbose_name='Точка', related_name='result', null=True, on_delete=models.DO_NOTHING)
+    frame = models.OneToOneField(to=Frame, verbose_name='Фрейм', related_name='result', null=True, on_delete=models.DO_NOTHING)
 
     class Meta:
-        verbose_name = 'Результаты наблюдений'
+        verbose_name = 'Результат наблюдений'
         verbose_name_plural = 'Результаты наблюдений'
 
     def __str__(self):
