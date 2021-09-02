@@ -392,6 +392,30 @@ class Point(AbstractSpherePoint, AbstractTimeMoment, AbstractImageFrame):
     def __str__(self):
         return f'{self.satellite}; {self.alpha}°; {self.beta}°; {self.exposure} мс; {self.get_dt_display()}'
 
+    @staticmethod
+    def validate(point):
+        errors = {}
+        if point is None:
+            errors['point'] = 'point is None'
+            return errors
+        cs_type = point.get('cs_type', None)
+        if cs_type is None:
+            errors['cs_type'] = 'cs_type is None'
+            return errors
+        mag = point.get('mag', None)
+        if mag is None:
+            errors['mag'] = 'mag is None'
+            return errors
+        if cs_type not in [AbstractSpherePoint.EARTH_SYSTEM, AbstractSpherePoint.STARS_SYSTEM]:
+            errors['cs_type'] = 'cs_type is not in [EARTH_SYSTEM, STARS_SYSTEM]'
+            return errors
+        try:
+            float(mag)
+        except ValueError:
+            errors['mag'] = 'mag is not float'
+            return errors
+        return errors
+
 
 class Balance(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Пользователь', related_name='balances',

@@ -62,6 +62,7 @@ class PointSerializer(serializers.ModelSerializer):
         errors.update(Point.validate_point(data, data.get('cs_type', None)))
         errors.update(Point.validate_frame(data))
         errors.update(Point.validate_moment(data, datetime.now(tz=pytz.UTC)))
+        errors.update(Point.validate(data))
         if len(errors) > 0:
             raise serializers.ValidationError(errors)
         return data
