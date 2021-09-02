@@ -58,12 +58,12 @@ class SatelliteSerializer(serializers.ModelSerializer):
 class PointSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
-        if not Point.validate_point(data, data.get('cs_type', None)):
-            raise serializers.ValidationError({"alpha": "invalid point coordinates"})
-        if not Point.validate_frame(data):
-            raise serializers.ValidationError({"exposure": "invalid frame exposure"})
-        if not Point.validate_moment(data, datetime.now(tz=pytz.UTC)):
-            raise serializers.ValidationError({"dt": "invalid time moment"})
+        errors = {}
+        errors.update(Point.validate_point(data, data.get('cs_type', None)))
+        errors.update(Point.validate_frame(data))
+        errors.update(Point.validate_moment(data, datetime.now(tz=pytz.UTC)))
+        if len(errors) > 0:
+            raise serializers.ValidationError(errors)
         return data
 
     class Meta:

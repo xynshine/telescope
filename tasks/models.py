@@ -142,27 +142,43 @@ class AbstractSpherePoint(models.Model):
 
     @staticmethod
     def validate_point(point, cs_type: SYSTEM_CHOICES):
-        if point is not None:
-            alpha = point.get('alpha', None)
-            beta = point.get('beta', None)
-            try:
-                f_alpha = float(alpha)
-                f_beta = float(beta)
-                if f_alpha < 0.0 or f_alpha > 360.0:
-                    return False
-                if cs_type == AbstractSpherePoint.EARTH_SYSTEM:
-                    if f_beta < 0.0 or f_beta > 90.0:
-                        return False
-                elif cs_type == AbstractSpherePoint.STARS_SYSTEM:
-                    if f_beta < 0.0 or f_beta > 180.0:
-                        return False
-                else:
-                    return False
-            except ValueError:
-                return False
+        errors = {}
+        if point is None:
+            errors['point'] = 'point is None'
+            return errors
+        alpha = point.get('alpha', None)
+        if alpha is None:
+            errors['alpha'] = 'alpha is None'
+            return errors
+        beta = point.get('beta', None)
+        if beta is None:
+            errors['beta'] = 'beta is None'
+            return errors
+        try:
+            float(alpha)
+        except ValueError:
+            errors['alpha'] = 'alpha is not float'
+            return errors
+        try:
+            float(beta)
+        except ValueError:
+            errors['beta'] = 'beta is not float'
+            return errors
+        if alpha < 0.0 or not alpha < 360.0:
+            errors['alpha'] = 'alpha is not in [0..360)'
+            return errors
+        if cs_type == AbstractSpherePoint.EARTH_SYSTEM:
+            if beta < 0.0 or beta > 90.0:
+                errors['beta'] = 'beta is not in [0..90]'
+                return errors
+        elif cs_type == AbstractSpherePoint.STARS_SYSTEM:
+            if beta < 0.0 or beta > 180.0:
+                errors['beta'] = 'beta is not in [0..180]'
+                return errors
         else:
-            return False
-        return True
+            errors['cs_type'] = 'cs_type is not in [EARTH_SYSTEM, STARS_SYSTEM]'
+            return errors
+        return errors
 
 
 class AbstractTimeMoment(models.Model):
@@ -180,26 +196,42 @@ class AbstractTimeMoment(models.Model):
 
     @staticmethod
     def validate_moment(moment, now: datetime):
-        if moment is not None:
-            dt = moment.get('dt', None)
-            jdn = moment.get('jdn', None)
-            jd = moment.get('jd', None)
-            try:
-                f_jdn = int(jdn)
-                f_jd = float(jd)
-                if not isinstance(dt, datetime):
-                    return False
-                if f_jd < 0.0 or not f_jd < 1.0:
-                    return False
-                if f_jdn == 0:
-                    return False
-                if not dt > now:
-                    return False
-            except ValueError:
-                return False
-        else:
-            return False
-        return True
+        errors = {}
+        if moment is None:
+            errors['moment'] = 'moment is None'
+            return errors
+        dt = moment.get('dt', None)
+        if dt is None:
+            errors['dt'] = 'dt is None'
+            return errors
+        jdn = moment.get('jdn', None)
+        if jdn is None:
+            errors['jdn'] = 'jdn is None'
+            return errors
+        jd = moment.get('jd', None)
+        if jd is None:
+            errors['jd'] = 'jd is None'
+            return errors
+        if not isinstance(dt, datetime):
+            errors['dt'] = 'dt is not datetime'
+            return errors
+        try:
+            int(jdn)
+        except ValueError:
+            errors['jdn'] = 'jdn is not int'
+            return errors
+        try:
+            float(jd)
+        except ValueError:
+            errors['jd'] = 'jd is not float'
+            return errors
+        if not dt > now:
+            errors['dt'] = 'dt is not in the future'
+            return errors
+        if jd < 0.0 or not jd < 1.0:
+            errors['jd'] = 'jd is not in [0..1)'
+            return errors
+        return errors
 
     @staticmethod
     def dt_to_jdn_jdf(dt: datetime):
@@ -221,17 +253,23 @@ class AbstractImageFrame(models.Model):
 
     @staticmethod
     def validate_frame(frame):
-        if frame is not None:
-            exposure = frame.get('exposure', None)
-            try:
-                f_exposure = float(exposure)
-                if f_exposure < 0.0:
-                    return False
-            except ValueError:
-                return False
-        else:
-            return False
-        return True
+        errors = {}
+        if frame is None:
+            errors['frame'] = 'frame is None'
+            return errors
+        exposure = frame.get('exposure', None)
+        if exposure is None:
+            errors['exposure'] = 'exposure is None'
+            return errors
+        try:
+            float(exposure)
+        except ValueError:
+            errors['exposure'] = 'exposure is not float'
+            return errors
+        if exposure < 0.0:
+            errors['exposure'] = 'exposure is negative'
+            return errors
+        return errors
 
 
 class Frame(AbstractTimeMoment, AbstractImageFrame):
