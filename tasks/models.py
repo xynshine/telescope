@@ -192,7 +192,7 @@ class AbstractTimeMoment(models.Model):
         verbose_name_plural = 'Моменты времени'
 
     def __str__(self):
-        return f'{self.get_dt_display()}'
+        return f'{self.dt.strftime("%Y-%m-%d %H:%M:%S")}'
 
     @staticmethod
     def validate_moment(moment, now: datetime):
@@ -281,7 +281,7 @@ class Frame(AbstractTimeMoment, AbstractImageFrame):
         verbose_name_plural = 'Фреймы (выдержка + время снимка)'
 
     def __str__(self):
-        return f'{self.exposure} мс; {self.get_dt_display()}'
+        return f'{self.exposure} мс; {self.dt.strftime("%Y-%m-%d %H:%M:%S")}'
 
     @staticmethod
     def validate(frame):
@@ -301,7 +301,7 @@ class TrackPoint(AbstractSpherePoint, AbstractTimeMoment):
         verbose_name_plural = 'Точки для трекинга'
 
     def __str__(self):
-        return f'{self.alpha}°; {self.beta}°; {self.get_dt_display()}'
+        return f'{self.alpha}°; {self.beta}°; {self.dt.strftime("%Y-%m-%d %H:%M:%S")}'
 
     @staticmethod
     def validate(point):
@@ -406,7 +406,7 @@ class Point(AbstractSpherePoint, AbstractTimeMoment, AbstractImageFrame):
         verbose_name_plural = 'Точки для снимков'
 
     def __str__(self):
-        return f'{self.satellite}; {self.alpha}°; {self.beta}°; {self.exposure} мс; {self.get_dt_display()}'
+        return f'{self.satellite}; {self.alpha}°; {self.beta}°; {self.exposure} мс; {self.dt.strftime("%Y-%m-%d %H:%M:%S")}'
 
     @staticmethod
     def validate(point):
