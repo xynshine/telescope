@@ -15,7 +15,7 @@ from tasks.serializers import (
     TelescopeSerializer, TelescopeBalanceSerializer, SatelliteSerializer,
     InputDataSerializer, PointSerializer, TrackingDataSerializer, TrackPointSerializer,
     BalanceRequestSerializer,
-    BalanceRequestCreateSerializer, TaskSerializer, TaskResultSerializer
+    BalanceRequestCreateSerializer, TaskSerializer, TaskResultSerializer, FrameSerializer
 )
 from tasks.helpers import telescope_collision_task_message, get_points_json, get_track_json, get_frames_json
 
@@ -118,6 +118,24 @@ class InputDataCreateView(generics.CreateAPIView):
                             errors.update(error)
                         return Response(errors, status=400)
                     tracks_serializer.save()
+                    frames = tracker['frames']
+                    for frame in frames:
+                        dt = datetime.strptime(frame['dt'], DT_FORMAT).replace(tzinfo=pytz.UTC)
+                        if min_dt > dt:
+                            min_dt = dt
+                        if max_dt < dt:
+                            max_dt = dt
+                        jdn, jdf = AbstractTimeMoment.dt_to_jdn_jdf(dt)
+                        frame['jdn'] = jdn
+                        frame['jd'] = jdf
+                        frame['task'] = inputdata.task.id
+                    frames_serializer = FrameSerializer(data=frames, many=True)
+                    if not frames_serializer.is_valid():
+                        errors = {}
+                        for error in frames_serializer.errors:
+                            errors.update(error)
+                        return Response(errors, status=400)
+                    frames_serializer.save()
                     tracker['task'] = inputdata.task.id
                     if inputdata.expected_sat:
                         tracker['satellite'] = inputdata.expected_sat.number

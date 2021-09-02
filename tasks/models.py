@@ -283,6 +283,14 @@ class Frame(AbstractTimeMoment, AbstractImageFrame):
     def __str__(self):
         return f'{self.exposure} мс; {self.get_dt_display()}'
 
+    @staticmethod
+    def validate(frame):
+        errors = {}
+        if frame is None:
+            errors['frame'] = 'frame is None'
+            return errors
+        return errors
+
 
 class TrackPoint(AbstractSpherePoint, AbstractTimeMoment):
     id = models.BigAutoField(primary_key=True)
