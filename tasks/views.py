@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, Balance, AbstractTimeMoment
 from tasks.serializers import (
     TelescopeSerializer, TelescopeBalanceSerializer, SatelliteSerializer,
-    InputDataSerializer, PointSerializer, TrackingDataSerializer,
+    InputDataSerializer, PointSerializer, TrackingDataSerializer, TrackPointSerializer,
     BalanceRequestSerializer,
     BalanceRequestCreateSerializer, TaskSerializer, TaskResultSerializer
 )
@@ -99,6 +99,25 @@ class InputDataCreateView(generics.CreateAPIView):
             elif inputdata.task.task_type == Task.TRACKING_MODE:
                 tracking = inputdata.data_json
                 for tracker in tracking:
+                    tracks = tracker['track']
+                    for track in tracks:
+                        dt = datetime.strptime(track['dt'], DT_FORMAT).replace(tzinfo=pytz.UTC)
+                        if min_dt > dt:
+                            min_dt = dt
+                        if max_dt < dt:
+                            max_dt = dt
+                        jdn, jdf = AbstractTimeMoment.dt_to_jdn_jdf(dt)
+                        track['jdn'] = jdn
+                        track['jd'] = jdf
+                        track['task'] = inputdata.task.id
+                        track['cs_type'] = tracker['cs_type']
+                    tracks_serializer = TrackPointSerializer(data=tracks, many=True)
+                    if not tracks_serializer.is_valid():
+                        errors = {}
+                        for error in tracks_serializer.errors:
+                            errors.update(error)
+                        return Response(errors, status=400)
+                    tracks_serializer.save()
                     tracker['task'] = inputdata.task.id
                     if inputdata.expected_sat:
                         tracker['satellite'] = inputdata.expected_sat.number

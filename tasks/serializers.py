@@ -86,6 +86,11 @@ class TrackingDataSerializer(serializers.ModelSerializer):
 
 
 class TrackPointSerializer(serializers.ModelSerializer):
+    cs_type = serializers.ChoiceField(TrackPoint.SYSTEM_CHOICES)
+
+    def create(self, validated_data):
+        del validated_data['cs_type']
+        return super().create(validated_data)
 
     def validate(self, data):
         errors = {}
@@ -98,7 +103,7 @@ class TrackPointSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TrackPoint
-        fields = ('id', 'task', 'alpha', 'beta', 'dt', 'jdn', 'jd')
+        fields = ('id', 'task', 'alpha', 'beta', 'dt', 'jdn', 'jd', 'cs_type')
 
 
 class InputDataSerializer(serializers.ModelSerializer):
