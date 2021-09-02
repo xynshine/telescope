@@ -295,6 +295,14 @@ class TrackPoint(AbstractSpherePoint, AbstractTimeMoment):
     def __str__(self):
         return f'{self.alpha}°; {self.beta}°; {self.get_dt_display()}'
 
+    @staticmethod
+    def validate(point):
+        errors = {}
+        if point is None:
+            errors['point'] = 'point is None'
+            return errors
+        return errors
+
 
 class TrackingData(models.Model):
     task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='tracking_data', on_delete=models.DO_NOTHING)

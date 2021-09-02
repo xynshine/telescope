@@ -85,6 +85,22 @@ class TrackingDataSerializer(serializers.ModelSerializer):
         fields = ('id', 'task', 'satellite', 'cs_type', 'mag', 'step_sec', 'count')
 
 
+class TrackPointSerializer(serializers.ModelSerializer):
+
+    def validate(self, data):
+        errors = {}
+        errors.update(TrackPoint.validate_point(data, data.get('cs_type', None)))
+        errors.update(TrackPoint.validate_moment(data, datetime.now(tz=pytz.UTC)))
+        errors.update(TrackPoint.validate(data))
+        if len(errors) > 0:
+            raise serializers.ValidationError(errors)
+        return data
+
+    class Meta:
+        model = TrackPoint
+        fields = ('id', 'task', 'alpha', 'beta', 'dt', 'jdn', 'jd')
+
+
 class InputDataSerializer(serializers.ModelSerializer):
     task = serializers.PrimaryKeyRelatedField(
         many=False, queryset=Task.objects.filter(status=Task.DRAFT)
@@ -124,13 +140,6 @@ class TleDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = TLEData
         fields = ('id', 'task', 'satellite_id', 'header', 'line1', 'line2')
-
-
-class TrackPointSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = TrackPoint
-        fields = ('id', 'task', 'alpha', 'beta', 'dt', 'jdn', 'jd')
 
 
 class FrameSerializer(serializers.ModelSerializer):
