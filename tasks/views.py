@@ -12,8 +12,8 @@ from rest_framework.response import Response
 
 from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, Balance, AbstractTimeMoment
 from tasks.serializers import (
-    TelescopeSerializer, TelescopeBalanceSerializer,
-    SatelliteSerializer, InputDataSerializer, PointSerializer,
+    TelescopeSerializer, TelescopeBalanceSerializer, SatelliteSerializer,
+    InputDataSerializer, PointSerializer, TrackingDataSerializer,
     BalanceRequestSerializer,
     BalanceRequestCreateSerializer, TaskSerializer, TaskResultSerializer
 )
@@ -97,7 +97,20 @@ class InputDataCreateView(generics.CreateAPIView):
                     return Response(errors, status=400)
                 point_serializer.save()
             elif inputdata.task.task_type == Task.TRACKING_MODE:
-                return Response(serializer.errors, status=501)
+                tracking = inputdata.data_json
+                for tracker in tracking:
+                    tracker['task'] = inputdata.task.id
+                    if inputdata.expected_sat:
+                        tracker['satellite'] = inputdata.expected_sat.number
+                    else:
+                        tracker['satellite'] = None
+                tracking_serializer = TrackingDataSerializer(data=tracking, many=True)
+                if not tracking_serializer.is_valid():
+                    errors = {}
+                    for error in tracking_serializer.errors:
+                        errors.update(error)
+                    return Response(errors, status=400)
+                tracking_serializer.save()
             else:
                 return Response(serializer.errors, status=400)
             jdn1, jdf1 = AbstractTimeMoment.dt_to_jdn_jdf(min_dt)
