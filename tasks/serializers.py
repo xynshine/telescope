@@ -71,6 +71,19 @@ class PointSerializer(serializers.ModelSerializer):
         fields = ('id', 'alpha', 'beta', 'cs_type', 'dt', 'exposure', 'mag', 'satellite', 'task', 'jdn', 'jd')
 
 
+class TrackingDataSerializer(serializers.ModelSerializer):
+
+    def validate(self, data):
+        errors = TrackingData.validate(data)
+        if len(errors) > 0:
+            raise serializers.ValidationError(errors)
+        return data
+
+    class Meta:
+        model = TrackingData
+        fields = ('id', 'task', 'satellite', 'cs_type', 'mag', 'step_sec', 'count')
+
+
 class InputDataSerializer(serializers.ModelSerializer):
     task = serializers.PrimaryKeyRelatedField(
         many=False, queryset=Task.objects.filter(status=Task.DRAFT)
@@ -103,13 +116,6 @@ class InputDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = InputData
         fields = ('id', 'task', 'expected_sat', 'data_type', 'data_tle', 'data_json')
-
-
-class TrackingDataSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = TrackingData
-        fields = ('id', 'task', 'cs_type', 'satellite_id', 'mag', 'step_sec', 'count')
 
 
 class TleDataSerializer(serializers.ModelSerializer):

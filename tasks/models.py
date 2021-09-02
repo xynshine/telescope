@@ -266,8 +266,8 @@ class AbstractImageFrame(models.Model):
         except ValueError:
             errors['exposure'] = 'exposure is not float'
             return errors
-        if exposure < 0.0:
-            errors['exposure'] = 'exposure is negative'
+        if not exposure > 0.0:
+            errors['exposure'] = 'exposure is not positive'
             return errors
         return errors
 
@@ -311,6 +311,54 @@ class TrackingData(models.Model):
     def __str__(self):
         if self.satellite:
             return f'{self.satellite}; {self.count} × {self.step_sec} с'
+
+    @staticmethod
+    def validate(tracking):
+        errors = {}
+        if tracking is None:
+            errors['tracking'] = 'tracking is None'
+            return errors
+        cs_type = tracking.get('cs_type', None)
+        if cs_type is None:
+            errors['cs_type'] = 'cs_type is None'
+            return errors
+        mag = tracking.get('mag', None)
+        if mag is None:
+            errors['mag'] = 'mag is None'
+            return errors
+        step_sec = tracking.get('step_sec', None)
+        if step_sec is None:
+            errors['step_sec'] = 'step_sec is None'
+            return errors
+        count = tracking.get('count', None)
+        if count is None:
+            errors['count'] = 'count is None'
+            return errors
+        if cs_type not in [AbstractSpherePoint.EARTH_SYSTEM, AbstractSpherePoint.STARS_SYSTEM]:
+            errors['cs_type'] = 'cs_type is not in [EARTH_SYSTEM, STARS_SYSTEM]'
+            return errors
+        try:
+            float(mag)
+        except ValueError:
+            errors['mag'] = 'mag is not float'
+            return errors
+        try:
+            float(step_sec)
+        except ValueError:
+            errors['step_sec'] = 'step_sec is not float'
+            return errors
+        try:
+            int(count)
+        except ValueError:
+            errors['count'] = 'count is not int'
+            return errors
+        if not step_sec > 0.0:
+            errors['step_sec'] = 'step_sec is not positive'
+            return errors
+        if not count > 0:
+            errors['count'] = 'count is not positive'
+            return errors
+        return errors
 
 
 class TLEData(models.Model):
