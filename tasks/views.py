@@ -10,7 +10,8 @@ from rest_framework import generics
 from rest_framework.response import Response
 
 
-from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, Balance, AbstractTimeMoment
+from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, Balance, AbstractTimeMoment, Point, \
+    Frame
 from tasks.serializers import (
     TelescopeSerializer, TelescopeBalanceSerializer, SatelliteSerializer,
     InputDataSerializer, PointSerializer, BalanceRequestSerializer,
@@ -310,26 +311,33 @@ def get_telescope_tasks(request, telescope_id, jdn=None):
     telescope = get_object_or_404(Telescope, id=telescope_id)
     plan['telescope'] = telescope.to_dict()
     plan['telescope']['avatar'] = None
-    tasks = Task.objects.filter(Q(
-        status=Task.CREATED,
-        telescope_id=telescope_id,
-        jdn=jdn
-    ))
-    plan['tasks'] = []
+    tasks = {}
+    if jdn is None:
+        tasks = Task.objects.filter(Q(
+            status=Task.CREATED,
+            telescope_id=telescope_id
+        )).order_by('start_dt')
+    else:
+        tasks = Task.objects.filter(Q(
+            status=Task.CREATED,
+            telescope_id=telescope_id,
+            jdn=jdn
+        )).order_by('start_dt')
+    plan['points'] = []
+    plan['frames'] = []
     for task in tasks:
-        t = task.to_dict()
-        t_type = ''
-        if task.task_type == Task.POINTS_MODE:
-            t_type = 'points'
-        elif task.task_type == Task.TRACKING_MODE:
-            t_type = 'tracking'
-        t[t_type] = []
-        t['tle'] = []
-        input_jsons = InputData.objects.filter(task=task)
-        for input_json in input_jsons:
-            if input_json.data_type == InputData.JSON:
-                t[t_type].append(input_json.data_json)
-            if len(input_json.data_tle) > 0:
-                t['tle'].append(input_json.data_tle)
-        plan['tasks'].append(t)
+        points = Point.objects.filter(task=task).order_by('dt')
+        for point in points:
+            p = point.to_dict()
+            p['task_type'] = task.task_type
+            if task.satellite is not None:
+                p['satellite'] = task.satellite.number
+            plan['points'].append(p)
+        frames = Frame.objects.filter(task=task).order_by('dt')
+        for frame in frames:
+            f = frame.to_dict()
+            f['task_type'] = task.task_type
+            if task.satellite is not None:
+                f['satellite'] = task.satellite.number
+            plan['frames'].append(f)
     return JsonResponse({"plan": plan})

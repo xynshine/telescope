@@ -301,6 +301,12 @@ class Frame(AbstractTimeMoment, AbstractImageFrame):
             return errors
         return errors
 
+    def to_dict(self):
+        data = {}
+        for f in self._meta.concrete_fields:
+            data[f.name] = f.value_from_object(self)
+        return data
+
 
 class TLEData(models.Model):
     task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='TLE_data', on_delete=models.DO_NOTHING)
@@ -345,6 +351,12 @@ class Point(AbstractSpherePoint, AbstractTimeMoment):
             errors['cs_type'] = 'cs_type is not in [EARTH_SYSTEM, STARS_SYSTEM]'
             return errors
         return errors
+
+    def to_dict(self):
+        data = {}
+        for f in self._meta.concrete_fields:
+            data[f.name] = f.value_from_object(self)
+        return data
 
 
 class Balance(models.Model):
