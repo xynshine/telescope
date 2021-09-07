@@ -329,7 +329,7 @@ class Point(AbstractSpherePoint, AbstractTimeMoment):
         verbose_name_plural = 'Точки для снимков'
 
     def __str__(self):
-        return f'{self.satellite}; {self.alpha}°; {self.beta}°; {self.exposure} мс; {self.dt.strftime("%Y-%m-%d %H:%M:%S")}'
+        return f'{self.alpha}°; {self.beta}°; {self.dt.strftime("%Y-%m-%d %H:%M:%S")}'
 
     @staticmethod
     def validate(point):
