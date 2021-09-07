@@ -72,8 +72,13 @@ class InputDataCreateView(generics.CreateAPIView):
         if inputdata.data_type == InputData.JSON:
             min_dt = datetime.max.replace(tzinfo=pytz.UTC)
             max_dt = datetime.min.replace(tzinfo=pytz.UTC)
-            if inputdata.task.task_type == Task.POINTS_MODE:
-                points = inputdata.data_json
+            if inputdata.task.task_type in [Task.POINTS_MODE, Task.TRACKING_MODE]:
+                plan = inputdata.data_json
+                points = plan.get('points', None)
+                if points is None:
+                    return Response({"points": "points is None"}, status=400)
+                if not len(points) > 0:
+                    return Response({"points": "points is Empty"}, status=400)
                 for point in points:
                     dt = datetime.strptime(point['dt'], DT_FORMAT).replace(tzinfo=pytz.UTC)
                     if min_dt > dt:
@@ -84,10 +89,6 @@ class InputDataCreateView(generics.CreateAPIView):
                     point['jdn'] = jdn
                     point['jd'] = jdf
                     point['task'] = inputdata.task.id
-                    if inputdata.expected_sat:
-                        point['satellite'] = inputdata.expected_sat.number
-                    else:
-                        point['satellite'] = None
                 point_serializer = PointSerializer(data=points, many=True)
                 if not point_serializer.is_valid():
                     errors = {}
@@ -95,45 +96,28 @@ class InputDataCreateView(generics.CreateAPIView):
                         errors.update(error)
                     return Response(errors, status=400)
                 point_serializer.save()
-            elif inputdata.task.task_type == Task.TRACKING_MODE:
-                return Response(serializer.errors, status=501)
-                tracking = inputdata.data_json
-                for tracker in tracking:
-                    tracks = tracker['track']
-                    for track in tracks:
-                        dt = datetime.strptime(track['dt'], DT_FORMAT).replace(tzinfo=pytz.UTC)
-                        if min_dt > dt:
-                            min_dt = dt
-                        if max_dt < dt:
-                            max_dt = dt
-                        jdn, jdf = AbstractTimeMoment.dt_to_jdn_jdf(dt)
-                        track['jdn'] = jdn
-                        track['jd'] = jdf
-                        track['task'] = inputdata.task.id
-                        track['cs_type'] = tracker['cs_type']
-                    frames = tracker['frames']
-                    for frame in frames:
-                        dt = datetime.strptime(frame['dt'], DT_FORMAT).replace(tzinfo=pytz.UTC)
-                        if min_dt > dt:
-                            min_dt = dt
-                        if max_dt < dt:
-                            max_dt = dt
-                        jdn, jdf = AbstractTimeMoment.dt_to_jdn_jdf(dt)
-                        frame['jdn'] = jdn
-                        frame['jd'] = jdf
-                        frame['task'] = inputdata.task.id
-                    frames_serializer = FrameSerializer(data=frames, many=True)
-                    if not frames_serializer.is_valid():
-                        errors = {}
-                        for error in frames_serializer.errors:
-                            errors.update(error)
-                        return Response(errors, status=400)
-                    frames_serializer.save()
-                    tracker['task'] = inputdata.task.id
-                    if inputdata.expected_sat:
-                        tracker['satellite'] = inputdata.expected_sat.number
-                    else:
-                        tracker['satellite'] = None
+                frames = plan.get('frames', None)
+                if frames is None:
+                    return Response({"frames": "frames is None"}, status=400)
+                if not len(frames) > 0:
+                    return Response({"frames": "frames is Empty"}, status=400)
+                for frame in frames:
+                    dt = datetime.strptime(frame['dt'], DT_FORMAT).replace(tzinfo=pytz.UTC)
+                    if min_dt > dt:
+                        min_dt = dt
+                    if max_dt < dt:
+                        max_dt = dt
+                    jdn, jdf = AbstractTimeMoment.dt_to_jdn_jdf(dt)
+                    frame['jdn'] = jdn
+                    frame['jd'] = jdf
+                    frame['task'] = inputdata.task.id
+                frames_serializer = FrameSerializer(data=frames, many=True)
+                if not frames_serializer.is_valid():
+                    errors = {}
+                    for error in frames_serializer.errors:
+                        errors.update(error)
+                    return Response(errors, status=400)
+                frames_serializer.save()
             else:
                 return Response(serializer.errors, status=400)
             jdn1, jdf1 = AbstractTimeMoment.dt_to_jdn_jdf(min_dt)
