@@ -306,23 +306,20 @@ def get_telescope_plan(request, telescope_id, task_id):
     return JsonResponse({'plan': data})
 
 
-def get_telescope_tasks(request, telescope_id, jdn=None):
+def get_telescope_tasks(request, jdn=None):
     plan = {}
-    telescope = get_object_or_404(Telescope, id=telescope_id)
+    telescope = get_object_or_404(Telescope, user=request.user)
+    telescope_id = telescope.id
     plan['telescope'] = telescope.to_dict()
     plan['telescope']['avatar'] = None
-    tasks = {}
-    if jdn is None:
-        tasks = Task.objects.filter(Q(
-            status=Task.CREATED,
-            telescope_id=telescope_id
-        )).order_by('start_dt')
-    else:
-        tasks = Task.objects.filter(Q(
-            status=Task.CREATED,
-            telescope_id=telescope_id,
-            jdn=jdn
-        )).order_by('start_dt')
+    if not jdn:
+        jdn = int(julian.to_jd(datetime.now()))
+    print(jdn)
+    tasks = Task.objects.filter(Q(
+        status=Task.CREATED,
+        telescope_id=telescope_id,
+        jdn=jdn
+    )).order_by('start_dt')
     plan['points'] = []
     plan['frames'] = []
     for task in tasks:

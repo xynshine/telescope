@@ -24,6 +24,7 @@ class Telescope(models.Model):
     longitude = models.FloatField('Долгота в градусах')
     fov = models.FloatField('Поле зрения в градусах')
     avatar = models.ImageField('Аватар', null=True, blank=True, upload_to='telescopes')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Пользователь телескопа', related_name='telescopes', null=True, default=None, on_delete=models.DO_NOTHING)
 
     class Meta:
         verbose_name = 'Телескоп'
@@ -41,6 +42,13 @@ class Telescope(models.Model):
         for f in self._meta.concrete_fields:
             data[f.name] = f.value_from_object(self)
         return data
+
+    @staticmethod
+    def is_telescope(user: settings.AUTH_USER_MODEL):
+        instance = Telescope.objects.filter(user=user)
+        if instance:
+            return True
+        return False
 
 
 class Satellite(models.Model):
