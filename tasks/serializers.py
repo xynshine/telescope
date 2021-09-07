@@ -4,7 +4,7 @@ from datetime import datetime
 import pytz
 from rest_framework import serializers
 from telescope.settings import SITE_URL, MEDIA_URL
-from tasks.models import Telescope, Satellite, InputData, Point, Task, TrackPoint, Frame, TrackingData, TLEData, BalanceRequest, TaskResult
+from tasks.models import Telescope, Satellite, InputData, Point, Task, Frame, TLEData, BalanceRequest, TaskResult
 from tasks.helpers import converting_degrees, is_float, is_int
 
 
@@ -60,7 +60,6 @@ class PointSerializer(serializers.ModelSerializer):
     def validate(self, data):
         errors = {}
         errors.update(Point.validate_point(data, data.get('cs_type', None)))
-        errors.update(Point.validate_frame(data))
         errors.update(Point.validate_moment(data, datetime.now(tz=pytz.UTC)))
         errors.update(Point.validate(data))
         if len(errors) > 0:
@@ -69,41 +68,7 @@ class PointSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Point
-        fields = ('id', 'alpha', 'beta', 'cs_type', 'dt', 'exposure', 'mag', 'satellite', 'task', 'jdn', 'jd')
-
-
-class TrackingDataSerializer(serializers.ModelSerializer):
-
-    def validate(self, data):
-        errors = TrackingData.validate(data)
-        if len(errors) > 0:
-            raise serializers.ValidationError(errors)
-        return data
-
-    class Meta:
-        model = TrackingData
-        fields = ('id', 'task', 'satellite', 'cs_type', 'mag', 'step_sec', 'count')
-
-
-class TrackPointSerializer(serializers.ModelSerializer):
-    cs_type = serializers.ChoiceField(TrackPoint.SYSTEM_CHOICES)
-
-    def create(self, validated_data):
-        del validated_data['cs_type']
-        return super().create(validated_data)
-
-    def validate(self, data):
-        errors = {}
-        errors.update(TrackPoint.validate_point(data, data.get('cs_type', None)))
-        errors.update(TrackPoint.validate_moment(data, datetime.now(tz=pytz.UTC)))
-        errors.update(TrackPoint.validate(data))
-        if len(errors) > 0:
-            raise serializers.ValidationError(errors)
-        return data
-
-    class Meta:
-        model = TrackPoint
-        fields = ('id', 'task', 'alpha', 'beta', 'dt', 'jdn', 'jd', 'cs_type')
+        fields = ('id', 'alpha', 'beta', 'cs_type', 'dt', 'task', 'jdn', 'jd')
 
 
 class FrameSerializer(serializers.ModelSerializer):
@@ -119,7 +84,7 @@ class FrameSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Frame
-        fields = ('id', 'task', 'exposure', 'dt', 'jdn', 'jd')
+        fields = ('id', 'task', 'mag', 'exposure', 'dt', 'jdn', 'jd')
 
 
 class InputDataSerializer(serializers.ModelSerializer):
@@ -153,7 +118,7 @@ class InputDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InputData
-        fields = ('id', 'task', 'expected_sat', 'data_type', 'data_tle', 'data_json')
+        fields = ('id', 'task', 'data_type', 'data_tle', 'data_json')
 
 
 class TleDataSerializer(serializers.ModelSerializer):
@@ -222,104 +187,6 @@ class PointTaskSerializer(serializers.ModelSerializer):
         instance.start_dt = min_dt
         instance.end_dt = max_dt
         self.save_points(instance, points)
-        instance.save()
-        return instance
-"""
-
-
-"""
-class TrackingTaskSerializer(serializers.ModelSerializer):
-    telescope = serializers.CharField(source='telescope.id')
-    tracking_data = TrackingDataSerializer()
-    track_points = TrackPointSerializer(many=True)
-    frames = FrameSerializer(many=True)
-    duration = serializers.FloatField()
-    min_dt = serializers.DateTimeField()
-    max_dt = serializers.DateTimeField()
-
-    class Meta:
-        model = Task
-        fields = ('telescope', 'tracking_data', 'track_points', 'frames', 'duration', 'min_dt', 'max_dt')
-
-    def validate_tracking_task(self, tracking_data):
-        satellite_id = tracking_data.get('satellite_id')
-        mag = tracking_data.get('mag')
-        step_sec = tracking_data.get('step_sec')
-        errors = []
-        if not is_int(satellite_id) or satellite_id < 0:
-            errors.append('введен некорректный ID спутника')
-        if not is_int(mag) or mag < 0:
-            errors.append('введена некорректная звездная величина')
-        if not is_int(step_sec) or step_sec < 0:
-            errors.append('введен некорректный временной шаг')
-        if errors:
-            raise serializers.ValidationError(f'Найдены следующие ошибки: {", ".join(errors)}')
-
-    def validate_track(self, track_points):
-        if len(track_points) < 2:
-            raise serializers.ValidationError('В задании должны быть выбраны хотя бы две точки для перемещения')
-        for point in track_points:
-            alpha = point.get('alpha')
-            beta = point.get('beta')
-            errors = []
-            if not is_float(alpha) or alpha < 0 or alpha > 360:
-                errors.append('введен некорректный азимут')
-            if not is_float(beta) or beta < 0 or beta > 90:
-                errors.append('введена некорректная высота')
-            if errors:
-                raise serializers.ValidationError(f'Найдены следующие ошибки: {", ".join(errors)}')
-
-    def validate_frames(self, frames):
-        if not frames:
-            raise serializers.ValidationError('В задании должны быть выбран хотя бы один момент для съемки')
-        for frame in frames:
-            exposure = frame.get('exposure')
-            if not is_int(exposure) or exposure < 0:
-                raise serializers.ValidationError('Введена некорректная выдержка')
-
-    def save_tracking_data(self, instance, tracking_data):
-        nested_serializer = TrackingDataSerializer(data=tracking_data)
-        nested_serializer.is_valid(raise_exception=True)
-        tracking_data_obj = nested_serializer.save()
-        tracking_data_obj.task_id = instance.id
-        tracking_data_obj.save()
-        return tracking_data_obj
-
-    def save_track(self, instance, track_data):
-        nested_serializer = TrackPointSerializer(data=track_data, many=True)
-        nested_serializer.is_valid(raise_exception=True)
-        track_list = nested_serializer.save()
-        for track in track_list:
-            track.task_id = instance.id
-            track.save()
-        return track_list
-
-    def save_frames(self, instance, frames_data):
-        nested_serializer = FrameSerializer(data=frames_data, many=True)
-        nested_serializer.is_valid(raise_exception=True)
-        frames_list = nested_serializer.save()
-        for frame in frames_list:
-            frame.task_id = instance.id
-            frame.save()
-        return frames_list
-
-    def create(self, validated_data):
-        telescope_id = validated_data.pop('telescope').get('id')
-        tracking_data = self.context['request'].data.get('tracking_data')
-        track = self.context['request'].data.get('track_points')
-        frames = self.context['request'].data.get('frames')
-        min_dt = self.context['request'].data.get('min_dt')
-        max_dt = self.context['request'].data.get('max_dt')
-        user = self.context['request'].user
-        self.validate_tracking_task(tracking_data)
-        self.validate_track(track)
-        self.validate_frames(frames)
-        instance = Task.objects.create(author=user, task_type=Task.TRACKING_MODE, telescope_id=telescope_id)
-        instance.start_dt = min_dt
-        instance.end_dt = max_dt
-        self.save_tracking_data(instance, tracking_data)
-        self.save_track(instance, track)
-        self.save_frames(instance, frames)
         instance.save()
         return instance
 """
@@ -446,7 +313,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ('id', 'status', 'author', 'created_at', 'telescope', 'task_type', 'start_dt', 'end_dt', 'jdn', 'start_jd', 'end_jd', 'url')
+        fields = ('id', 'status', 'author', 'created_at', 'telescope', "satellite", 'task_type', 'start_dt', 'end_dt', 'jdn', 'start_jd', 'end_jd', 'url')
 
 
 class TaskResultSerializer(serializers.ModelSerializer):

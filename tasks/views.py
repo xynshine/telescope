@@ -13,8 +13,7 @@ from rest_framework.response import Response
 from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, Balance, AbstractTimeMoment
 from tasks.serializers import (
     TelescopeSerializer, TelescopeBalanceSerializer, SatelliteSerializer,
-    InputDataSerializer, PointSerializer, TrackingDataSerializer, TrackPointSerializer,
-    BalanceRequestSerializer,
+    InputDataSerializer, PointSerializer, BalanceRequestSerializer,
     BalanceRequestCreateSerializer, TaskSerializer, TaskResultSerializer, FrameSerializer
 )
 from tasks.helpers import telescope_collision_task_message, get_points_json, get_track_json, get_frames_json
@@ -97,6 +96,7 @@ class InputDataCreateView(generics.CreateAPIView):
                     return Response(errors, status=400)
                 point_serializer.save()
             elif inputdata.task.task_type == Task.TRACKING_MODE:
+                return Response(serializer.errors, status=501)
                 tracking = inputdata.data_json
                 for tracker in tracking:
                     tracks = tracker['track']
@@ -111,13 +111,6 @@ class InputDataCreateView(generics.CreateAPIView):
                         track['jd'] = jdf
                         track['task'] = inputdata.task.id
                         track['cs_type'] = tracker['cs_type']
-                    tracks_serializer = TrackPointSerializer(data=tracks, many=True)
-                    if not tracks_serializer.is_valid():
-                        errors = {}
-                        for error in tracks_serializer.errors:
-                            errors.update(error)
-                        return Response(errors, status=400)
-                    tracks_serializer.save()
                     frames = tracker['frames']
                     for frame in frames:
                         dt = datetime.strptime(frame['dt'], DT_FORMAT).replace(tzinfo=pytz.UTC)
@@ -141,13 +134,6 @@ class InputDataCreateView(generics.CreateAPIView):
                         tracker['satellite'] = inputdata.expected_sat.number
                     else:
                         tracker['satellite'] = None
-                tracking_serializer = TrackingDataSerializer(data=tracking, many=True)
-                if not tracking_serializer.is_valid():
-                    errors = {}
-                    for error in tracking_serializer.errors:
-                        errors.update(error)
-                    return Response(errors, status=400)
-                tracking_serializer.save()
             else:
                 return Response(serializer.errors, status=400)
             jdn1, jdf1 = AbstractTimeMoment.dt_to_jdn_jdf(min_dt)
@@ -191,36 +177,6 @@ class PointTaskView(generics.CreateAPIView):
             balance.minutes = balance.minutes - duration
             balance.save()
             return Response(data={'msg': f'Задание №{point_task.id} успешно создано, на этом телескопе осталось {balance.minutes} минут для наблюдений', 'status': 'ok'})
-        except Balance.DoesNotExist:
-            return Response(data={'msg': f'Ошибка создания задания, нет доступа к данному телескопу', 'status': 'error'}, status=400)
-"""
-
-
-"""
-class TrackingTaskView(generics.CreateAPIView):
-    queryset = Task.objects.filter(task_type=Task.TRACKING_MODE)
-    serializer_class = TrackingTaskSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer_class = self.get_serializer_class()
-        serializer = serializer_class(data=self.request.data, context=self.get_serializer_context())
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
-        tracking_task = serializer.save()
-        telescope_id = self.request.data.get('telescope')
-        start_dt = datetime.strptime(self.request.data.get('min_dt'), DT_FORMAT).replace(tzinfo=pytz.UTC)
-        end_dt = datetime.strptime(self.request.data.get('max_dt'), DT_FORMAT).replace(tzinfo=pytz.UTC)
-        collisions_message = telescope_collision_task_message(telescope_id, start_dt, end_dt)
-        if collisions_message:
-            return Response(data={'msg': collisions_message}, status=400)
-        duration = int(self.request.data.get('duration'))
-        try:
-            balance = Balance.objects.get(user=self.request.user, telescope_id=telescope_id)
-            balance.minutes = balance.minutes - duration
-            balance.save()
-            return Response(data={
-                'msg': f'Задание №{tracking_task.id} успешно создано, на этом телескопе осталось {balance.minutes} минут для наблюдений',
-                'status': 'ok'})
         except Balance.DoesNotExist:
             return Response(data={'msg': f'Ошибка создания задания, нет доступа к данному телескопу', 'status': 'error'}, status=400)
 """

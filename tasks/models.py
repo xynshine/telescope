@@ -76,7 +76,8 @@ class Task(models.Model):
     )
     status = models.SmallIntegerField('Статус задания', choices=STATUS_CHOICES, editable=False, default=DRAFT)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Автор задания', related_name='tasks', editable=False, on_delete=models.DO_NOTHING)
-    telescope = models.ForeignKey(Telescope, verbose_name='Телескоп', related_name='tasks', limit_choices_to={'enabled': True}, on_delete=models.DO_NOTHING)
+    telescope = models.ForeignKey(to=Telescope, verbose_name='Телескоп', related_name='tasks', limit_choices_to={'enabled': True}, on_delete=models.DO_NOTHING)
+    satellite = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Спутник', related_name='tasks', null=True, on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True, blank=True)
     task_type = models.SmallIntegerField('Тип задания', choices=TYPE_CHOICES)
     start_dt = models.DateTimeField('Дата и время начала наблюдения', editable=False, null=True, blank=True)
@@ -109,7 +110,6 @@ class InputData(models.Model):
         (JSON, 'Массив точек в формате JSON'),
     )
     task = models.OneToOneField(Task, verbose_name='Задание', related_name='tasks_inputdata', on_delete=models.CASCADE)
-    expected_sat = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Ожидаемый спутник', related_name='tasks_inputdata', null=True, on_delete=models.DO_NOTHING)
     data_type = models.SmallIntegerField('Тип данных', choices=TYPE_CHOICES, editable=False)
     data_tle = models.TextField('Данные в формате TLE', blank=True)
     data_json = models.JSONField('Данные в формате JSON', null=True)
@@ -119,7 +119,7 @@ class InputData(models.Model):
         verbose_name_plural = 'Входные данные'
 
     def __str__(self):
-        return f'({self.id}) {self.get_data_type_display()} по космическому объекту {self.expected_sat} для задания {self.task}'
+        return f'({self.id}) {self.get_data_type_display()} для задания {self.task}'
 
 
 class AbstractSpherePoint(models.Model):
@@ -241,6 +241,7 @@ class AbstractTimeMoment(models.Model):
 
 
 class AbstractImageFrame(models.Model):
+    mag = models.FloatField('Звездная велечина')
     exposure = models.FloatField('Выдержка снимка в мс')
 
     class Meta:
@@ -257,9 +258,18 @@ class AbstractImageFrame(models.Model):
         if frame is None:
             errors['frame'] = 'frame is None'
             return errors
+        mag = frame.get('mag', None)
+        if mag is None:
+            errors['mag'] = 'mag is None'
+            return errors
         exposure = frame.get('exposure', None)
         if exposure is None:
             errors['exposure'] = 'exposure is None'
+            return errors
+        try:
+            float(mag)
+        except ValueError:
+            errors['mag'] = 'mag is not float'
             return errors
         try:
             float(exposure)
@@ -292,91 +302,6 @@ class Frame(AbstractTimeMoment, AbstractImageFrame):
         return errors
 
 
-class TrackPoint(AbstractSpherePoint, AbstractTimeMoment):
-    id = models.BigAutoField(primary_key=True)
-    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='track_points', on_delete=models.DO_NOTHING)
-
-    class Meta:
-        verbose_name = 'Точка для трекинга'
-        verbose_name_plural = 'Точки для трекинга'
-
-    def __str__(self):
-        return f'{self.alpha}°; {self.beta}°; {self.dt.strftime("%Y-%m-%d %H:%M:%S")}'
-
-    @staticmethod
-    def validate(point):
-        errors = {}
-        if point is None:
-            errors['point'] = 'point is None'
-            return errors
-        return errors
-
-
-class TrackingData(models.Model):
-    task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='tracking_data', on_delete=models.DO_NOTHING)
-    satellite = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Спутник', related_name='tracking_data', null=True, on_delete=models.DO_NOTHING)
-    cs_type = models.SmallIntegerField('Система координат', choices=AbstractSpherePoint.SYSTEM_CHOICES, default=AbstractSpherePoint.EARTH_SYSTEM)
-    mag = models.FloatField('Звездная велечина')
-    step_sec = models.FloatField('Шаг по времени', default=1)
-    count = models.IntegerField('Количество снимков', default=20)
-
-    class Meta:
-        verbose_name = 'Данные для трекинга'
-        verbose_name_plural = 'Данные для трекинга'
-
-    def __str__(self):
-        if self.satellite:
-            return f'{self.satellite}; {self.count} × {self.step_sec} с'
-
-    @staticmethod
-    def validate(tracking):
-        errors = {}
-        if tracking is None:
-            errors['tracking'] = 'tracking is None'
-            return errors
-        cs_type = tracking.get('cs_type', None)
-        if cs_type is None:
-            errors['cs_type'] = 'cs_type is None'
-            return errors
-        mag = tracking.get('mag', None)
-        if mag is None:
-            errors['mag'] = 'mag is None'
-            return errors
-        step_sec = tracking.get('step_sec', None)
-        if step_sec is None:
-            errors['step_sec'] = 'step_sec is None'
-            return errors
-        count = tracking.get('count', None)
-        if count is None:
-            errors['count'] = 'count is None'
-            return errors
-        if cs_type not in [AbstractSpherePoint.EARTH_SYSTEM, AbstractSpherePoint.STARS_SYSTEM]:
-            errors['cs_type'] = 'cs_type is not in [EARTH_SYSTEM, STARS_SYSTEM]'
-            return errors
-        try:
-            float(mag)
-        except ValueError:
-            errors['mag'] = 'mag is not float'
-            return errors
-        try:
-            float(step_sec)
-        except ValueError:
-            errors['step_sec'] = 'step_sec is not float'
-            return errors
-        try:
-            int(count)
-        except ValueError:
-            errors['count'] = 'count is not int'
-            return errors
-        if not step_sec > 0.0:
-            errors['step_sec'] = 'step_sec is not positive'
-            return errors
-        if not count > 0:
-            errors['count'] = 'count is not positive'
-            return errors
-        return errors
-
-
 class TLEData(models.Model):
     task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='TLE_data', on_delete=models.DO_NOTHING)
     satellite = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Спутник', related_name='TLE_data', null=True, on_delete=models.DO_NOTHING)
@@ -394,11 +319,9 @@ class TLEData(models.Model):
         return 'Без заголовка'
 
 
-class Point(AbstractSpherePoint, AbstractTimeMoment, AbstractImageFrame):
+class Point(AbstractSpherePoint, AbstractTimeMoment):
     id = models.BigAutoField(primary_key=True)
     task = models.ForeignKey(to=Task, verbose_name='Задание', related_name='points', on_delete=models.DO_NOTHING)
-    satellite = models.ForeignKey(to=Satellite, to_field='number', verbose_name='Спутник', related_name='points', null=True, on_delete=models.DO_NOTHING)
-    mag = models.FloatField('Звездная велечина')
     cs_type = models.SmallIntegerField('Система координат', choices=AbstractSpherePoint.SYSTEM_CHOICES, default=AbstractSpherePoint.EARTH_SYSTEM)
 
     class Meta:
@@ -418,17 +341,8 @@ class Point(AbstractSpherePoint, AbstractTimeMoment, AbstractImageFrame):
         if cs_type is None:
             errors['cs_type'] = 'cs_type is None'
             return errors
-        mag = point.get('mag', None)
-        if mag is None:
-            errors['mag'] = 'mag is None'
-            return errors
         if cs_type not in [AbstractSpherePoint.EARTH_SYSTEM, AbstractSpherePoint.STARS_SYSTEM]:
             errors['cs_type'] = 'cs_type is not in [EARTH_SYSTEM, STARS_SYSTEM]'
-            return errors
-        try:
-            float(mag)
-        except ValueError:
-            errors['mag'] = 'mag is not float'
             return errors
         return errors
 
