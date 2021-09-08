@@ -69,7 +69,7 @@ class InputDataCreateView(generics.CreateAPIView):
         serializer = serializer_class(data=self.request.data, context=self.get_serializer_context())
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
-        inputdata = serializer.save(self.request.user)
+        inputdata = serializer.save()
         if inputdata.data_type == InputData.JSON:
             min_dt = datetime.max.replace(tzinfo=pytz.UTC)
             max_dt = datetime.min.replace(tzinfo=pytz.UTC)
@@ -239,8 +239,12 @@ class UserTaskCreateView(generics.CreateAPIView):
     serializer_class = TaskSerializer
 
     def create(self, request, *args, **kwargs):
+        data = self.request.data
+        data._mutable = True
+        data_tle = data.pop('data_tle')
+        data_json = data.pop('data_json')
         serializer_class = self.get_serializer_class()
-        serializer = serializer_class(data=self.request.data, context=self.get_serializer_context())
+        serializer = serializer_class(data=data, context=self.get_serializer_context())
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
         inputtask = serializer.save(self.request.user)

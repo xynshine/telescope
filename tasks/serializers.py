@@ -88,31 +88,13 @@ class FrameSerializer(serializers.ModelSerializer):
 
 
 class InputDataSerializer(serializers.ModelSerializer):
-    task = serializers.PrimaryKeyRelatedField(
-        many=False, queryset=Task.objects.filter(status=Task.DRAFT)
-    )
 
-    def validate_status(self, status):
-        if not status == Task.DRAFT:
-            raise serializers.ValidationError({"task": "status should be DRAFT"})
-        return status
-
-    def validate_user(self, user, author):
-        if not user == author:
-            raise serializers.ValidationError({"task": "user should be author"})
-        return user
-
-    def validate(self, data):
-        self.validate_status(data.get('task', None).status)
-        return data
-
-    def save(self, user):
+    def save(self):
         data_type = InputData.NONE
         if len(self.validated_data.get('data_tle')) > 0:
             data_type = InputData.TLE
         if self.validated_data.get('data_json') is not None:
             data_type = InputData.JSON
-        self.validate_user(user, self.validated_data.get('task').author)
         data = super().save(data_type=data_type)
         return data
 
@@ -289,6 +271,8 @@ class BalanceRequestCreateSerializer(serializers.ModelSerializer):
 
 class TaskSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
+    data_tle = serializers.CharField(label='Данные в формате TLE', required=False, allow_blank=True, max_length=165)
+    data_json = serializers.JSONField(label='Данные в формате JSON', required=False, allow_null=True)
 
     def get_url(self, obj):
         if obj.status == Task.READY:
@@ -313,7 +297,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ('id', 'status', 'author', 'created_at', 'telescope', "satellite", 'task_type', 'start_dt', 'end_dt', 'jdn', 'start_jd', 'end_jd', 'url')
+        fields = ('id', 'status', 'author', 'created_at', 'telescope', "satellite", 'task_type', 'start_dt', 'end_dt', 'jdn', 'start_jd', 'end_jd', 'url', 'data_tle', 'data_json')
 
 
 class TaskResultSerializer(serializers.ModelSerializer):
