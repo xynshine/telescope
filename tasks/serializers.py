@@ -110,128 +110,6 @@ class TleDataSerializer(serializers.ModelSerializer):
         fields = ('id', 'task', 'satellite_id', 'header', 'line1', 'line2')
 
 
-"""
-class PointTaskSerializer(serializers.ModelSerializer):
-    telescope = serializers.CharField(source='telescope.id')
-    points = PointSerializer(many=True)
-    duration = serializers.FloatField()
-    min_dt = serializers.DateTimeField()
-    max_dt = serializers.DateTimeField()
-
-    class Meta:
-        model = Task
-        fields = ('telescope', 'points', 'duration', 'min_dt', 'max_dt')
-
-    def validate_points(self, points):
-        if not points:
-            raise serializers.ValidationError('В задании должна быть выбрана хотя бы одна точка для наблюдения')
-        for point in points:
-            satellite_id = point.get('satellite_id')
-            mag = point.get('mag')
-            alpha = point.get('alpha')
-            beta = point.get('beta')
-            exposure = point.get('exposure')
-            cs_type = point.get('cs_type')
-            dt = point.get('dt')
-            errors = []
-            if not is_int(satellite_id) or satellite_id < 0:
-                errors.append('введен некорректный ID спутника')
-            if not is_int(mag) or mag < 0:
-                errors.append('введена некорректная звездная величина')
-            if not is_int(exposure) or exposure < 0:
-                errors.append('введена некорректная выдержка')
-            if cs_type not in [Point.EARTH_SYSTEM, Point.STARS_SYSTEM]:
-                errors.append('неправильно указана система координат')
-            if not is_float(alpha) or alpha < 0 or alpha > 360:
-                errors.append('введен некорректный азимут')
-            if not is_float(beta) or beta < 0 or beta > 90:
-                errors.append('введена некорректная высота')
-            if errors:
-                raise serializers.ValidationError(f'Найдены следующие ошибки: {", ".join(errors)}')
-
-    def save_points(self, instance, points):
-        nested_serializer = PointSerializer(data=points, many=True)
-        nested_serializer.is_valid(raise_exception=True)
-        points_list = nested_serializer.save()
-        for point in points_list:
-            point.task_id = instance.id
-            point.save()
-        return instance
-
-    def create(self, validated_data):
-        telescope_id = validated_data.pop('telescope').get('id')
-        points = self.context['request'].data.get('points')
-        min_dt = self.context['request'].data.get('min_dt')
-        max_dt = self.context['request'].data.get('max_dt')
-        user = self.context['request'].user
-        self.validate_points(points)
-        instance = Task.objects.create(author=user, task_type=Task.POINTS_MODE, telescope_id=telescope_id)
-        instance.start_dt = min_dt
-        instance.end_dt = max_dt
-        self.save_points(instance, points)
-        instance.save()
-        return instance
-"""
-
-
-"""
-class TleTaskSerializer(serializers.ModelSerializer):
-    telescope = serializers.CharField(source='telescope.id')
-    tle_data = TleDataSerializer()
-    frames = FrameSerializer(many=True)
-    duration = serializers.FloatField()
-    min_dt = serializers.DateTimeField()
-    max_dt = serializers.DateTimeField()
-
-    class Meta:
-        model = Task
-        fields = ('telescope', 'tle_data', 'frames', 'duration', 'min_dt', 'max_dt')
-
-    def save_tle_data(self, instance, tle_data):
-        nested_serializer = TleDataSerializer(data=tle_data)
-        nested_serializer.is_valid(raise_exception=True)
-        tle_data_obj = nested_serializer.save()
-        tle_data_obj.task_id = instance.id
-        tle_data_obj.save()
-        return tle_data_obj
-
-    def save_frames(self, instance, frames_data):
-        nested_serializer = FrameSerializer(data=frames_data, many=True)
-        nested_serializer.is_valid(raise_exception=True)
-        frames_list = nested_serializer.save()
-        for frame in frames_list:
-            frame.task_id = instance.id
-            frame.save()
-        return frames_list
-
-    def validate_frames(self, frames):
-        if not frames:
-            raise serializers.ValidationError('В задании должны быть выбран хотя бы один момент для съемки')
-        for frame in frames:
-            exposure = frame.get('exposure')
-            if not is_int(exposure) or exposure < 0:
-                raise serializers.ValidationError('Введена некорректная выдержка')
-
-    def create(self, validated_data):
-        telescope_id = validated_data.pop('telescope').get('id')
-        tle_data = self.context['request'].data.get('tle_data')
-        frames = self.context['request'].data.get('frames')
-        min_dt = self.context['request'].data.get('min_dt')
-        max_dt = self.context['request'].data.get('max_dt')
-        user = self.context['request'].user
-        self.validate_frames(frames)
-        if not is_int(tle_data.get('satellite_id')) or tle_data.get('satellite_id') < 0:
-            raise serializers.ValidationError('Введен некорректный ID спутника')
-        instance = Task.objects.create(author=user, task_type=Task.TLE_MODE, telescope_id=telescope_id)
-        self.save_tle_data(instance, tle_data)
-        self.save_frames(instance, frames)
-        instance.start_dt = min_dt
-        instance.end_dt = max_dt
-        instance.save()
-        return instance
-"""
-
-
 class BalanceRequestSerializer(serializers.ModelSerializer):
     telescope = serializers.CharField(source='telescope.name')
     created = serializers.SerializerMethodField()
@@ -271,8 +149,8 @@ class BalanceRequestCreateSerializer(serializers.ModelSerializer):
 
 class TaskSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
-    data_tle = serializers.CharField(label='Данные в формате TLE', required=False, allow_blank=True, max_length=165)
-    data_json = serializers.JSONField(label='Данные в формате JSON', required=False, allow_null=True)
+    data_tle = serializers.CharField(label='Данные в формате TLE', required=False, allow_blank=True, default='', max_length=165)
+    data_json = serializers.JSONField(label='Данные в формате JSON', required=False, allow_null=True, default=None, binary=True)
 
     def get_url(self, obj):
         if obj.status == Task.READY:
@@ -290,6 +168,11 @@ class TaskSerializer(serializers.ModelSerializer):
         self.validate_enabled(data.get('telescope', None).enabled)
         self.validate_ttype(data.get('task_type', None))
         return data
+
+    def create(self, validated_data):
+        validated_data.pop('data_tle')
+        validated_data.pop('data_json')
+        return super().create(validated_data)
 
     def save(self, user):
         task = super().save(author=user)

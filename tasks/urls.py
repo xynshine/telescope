@@ -7,10 +7,8 @@ urlpatterns = [
     re_path(r'^satellites/$', views.SatelliteView.as_view(), name='satellite_list'),
     re_path(r'^satellite_add/$', views.SatelliteCreateView.as_view(), name='satellite_add'),
     re_path(r'^inputdata/$', views.InputDataView.as_view(), name='inputdata_list'),
-    re_path(r'^inputdata_add/$', views.InputDataCreateView.as_view(), name='inputdata_add'),
     re_path(r'^tasks/$', views.UserTasks.as_view(), name='user_tasks'),
     re_path(r'^task_add/$', views.UserTaskCreateView.as_view(), name='task_add'),
-    re_path(r'^task_confirm/(?P<task_id>\d+)/$', views.get_task_confirm, name='task_confirm'),
     re_path(r'^tasks_get/(?P<jdn>\d+)?/?$', views.get_telescope_tasks, name='tasks_get'),
     re_path(r'^(?P<pk>\d+)/get_result/$', views.TaskResult.as_view(), name='task_result'),
     re_path(r'^requests/$', views.BalanceRequestView.as_view(), name='requests'),
@@ -19,5 +17,3 @@ urlpatterns = [
     re_path(r'^(?P<telescope_id>\d+)/schedule/$', views.get_telescope_schedule, name='telescope_schedule'),
     re_path(r'^(?P<telescope_id>\d+)/get_plan/(?P<task_id>\d+)/$', views.get_telescope_plan, name='get_telescope_plan'),
 ]
-#   re_path(r'^point_task/$', views.PointTaskView.as_view(), name='point_task'),
-#   re_path(r'^tle_task/$', views.TleTaskView.as_view(), name='tle_task'),

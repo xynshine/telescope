@@ -61,19 +61,27 @@ class InputDataView(generics.ListAPIView):
         return InputData.objects.filter(task__in=tasks).order_by('-id')
 
 
-class InputDataCreateView(generics.CreateAPIView):
-    serializer_class = InputDataSerializer
+class UserTaskCreateView(generics.CreateAPIView):
+    serializer_class = TaskSerializer
 
     def create(self, request, *args, **kwargs):
-        serializer_class = self.get_serializer_class()
-        serializer = serializer_class(data=self.request.data, context=self.get_serializer_context())
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
-        inputdata = serializer.save()
+        data = request.data
+        data._mutable = True
+        task_serializer_class = self.get_serializer_class()
+        task_serializer = task_serializer_class(data=data, context=self.get_serializer_context())
+        if not task_serializer.is_valid():
+            return Response(task_serializer.errors, status=400)
+        inputtask = task_serializer.save(request.user)
+        data.update(task=inputtask.id)
+        print(data)
+        data_serializer = InputDataSerializer(data=data, context=self.get_serializer_context())
+        if not data_serializer.is_valid():
+            return Response(data_serializer.errors, status=400)
+        inputdata = data_serializer.save()
         if inputdata.data_type == InputData.JSON:
             min_dt = datetime.max.replace(tzinfo=pytz.UTC)
             max_dt = datetime.min.replace(tzinfo=pytz.UTC)
-            if inputdata.task.task_type in [Task.POINTS_MODE, Task.TRACKING_MODE]:
+            if inputtask.task_type in [Task.POINTS_MODE, Task.TRACKING_MODE]:
                 plan = inputdata.data_json
                 points = plan.get('points', None)
                 if points is None:
@@ -89,7 +97,7 @@ class InputDataCreateView(generics.CreateAPIView):
                     jdn, jdf = AbstractTimeMoment.dt_to_jdn_jdf(dt)
                     point['jdn'] = jdn
                     point['jd'] = jdf
-                    point['task'] = inputdata.task.id
+                    point['task'] = inputtask.id
                 point_serializer = PointSerializer(data=points, many=True)
                 if not point_serializer.is_valid():
                     errors = {}
@@ -111,7 +119,7 @@ class InputDataCreateView(generics.CreateAPIView):
                     jdn, jdf = AbstractTimeMoment.dt_to_jdn_jdf(dt)
                     frame['jdn'] = jdn
                     frame['jd'] = jdf
-                    frame['task'] = inputdata.task.id
+                    frame['task'] = inputtask.id
                 frames_serializer = FrameSerializer(data=frames, many=True)
                 if not frames_serializer.is_valid():
                     errors = {}
@@ -120,83 +128,24 @@ class InputDataCreateView(generics.CreateAPIView):
                     return Response(errors, status=400)
                 frames_serializer.save()
             else:
-                return Response(serializer.errors, status=400)
+                return Response(data_serializer.errors, status=400)
             jdn1, jdf1 = AbstractTimeMoment.dt_to_jdn_jdf(min_dt)
-            inputdata.task.start_dt = min_dt
-            inputdata.task.start_jd = jdf1 + jdn1
-            inputdata.task.jdn = jdn1
+            inputtask.start_dt = min_dt
+            inputtask.start_jd = jdf1 + jdn1
+            inputtask.jdn = jdn1
             jdn2, jdf2 = AbstractTimeMoment.dt_to_jdn_jdf(max_dt)
-            inputdata.task.end_dt = max_dt
-            inputdata.task.end_jd = jdf2 + jdn2
-            inputdata.task.save()
+            inputtask.end_dt = max_dt
+            inputtask.end_jd = jdf2 + jdn2
         elif inputdata.data_type == InputData.TLE:
-            return Response(serializer.errors, status=501)
+            return Response(data_serializer.errors, status=501)
         else:
-            return Response(serializer.errors, status=400)
+            return Response(data_serializer.errors, status=400)
+        inputtask.status = Task.CREATED
+        inputtask.save()
         return Response(data={
-            'msg': f'Входные данные №{inputdata.id} успешно созданы',
+            'msg': f'Задание №{inputtask.id} успешно создано',
             'status': 'ok'
         })
-
-
-"""
-class PointTaskView(generics.CreateAPIView):
-    queryset = Task.objects.filter(task_type=Task.POINTS_MODE)
-    serializer_class = PointTaskSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer_class = self.get_serializer_class()
-        serializer = serializer_class(data=self.request.data, context=self.get_serializer_context())
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
-        telescope_id = self.request.data.get('telescope')
-        start_dt = datetime.strptime(self.request.data.get('min_dt'), DT_FORMAT).replace(tzinfo=pytz.UTC)
-        end_dt = datetime.strptime(self.request.data.get('max_dt'), DT_FORMAT).replace(tzinfo=pytz.UTC)
-        collisions_message = telescope_collision_task_message(telescope_id, start_dt, end_dt)
-        if collisions_message:
-            return Response(data={'msg': collisions_message}, status=400)
-        point_task = serializer.save()
-        duration = int(self.request.data.get('duration'))
-        try:
-            balance = Balance.objects.get(user=self.request.user, telescope_id=telescope_id)
-            balance.minutes = balance.minutes - duration
-            balance.save()
-            return Response(data={'msg': f'Задание №{point_task.id} успешно создано, на этом телескопе осталось {balance.minutes} минут для наблюдений', 'status': 'ok'})
-        except Balance.DoesNotExist:
-            return Response(data={'msg': f'Ошибка создания задания, нет доступа к данному телескопу', 'status': 'error'}, status=400)
-"""
-
-
-'''
-class TleTaskView(generics.CreateAPIView):
-    queryset = Task.objects.filter(task_type=Task.TLE_MODE)
-    serializer_class = TleTaskSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer_class = self.get_serializer_class()
-        serializer = serializer_class(data=self.request.data, context=self.get_serializer_context())
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
-        tle_task = serializer.save()
-        telescope_id = self.request.data.get('telescope')
-        start_dt = datetime.strptime(self.request.data.get('min_dt'), DT_FORMAT).replace(tzinfo=pytz.UTC)
-        end_dt = datetime.strptime(self.request.data.get('max_dt'), DT_FORMAT).replace(tzinfo=pytz.UTC)
-        collisions_message = telescope_collision_task_message(telescope_id, start_dt, end_dt)
-        if collisions_message:
-            return Response(data={'msg': collisions_message}, status=400)
-        duration = int(self.request.data.get('duration'))
-        try:
-            balance = Balance.objects.get(user=self.request.user, telescope_id=telescope_id)
-            balance.minutes = balance.minutes - duration
-            balance.save()
-            return Response(data={
-                'msg': f'Задание №{tle_task.id} успешно создано, на этом телескопе осталось {balance.minutes} минут для наблюдений',
-                'status': 'ok'})
-        except Balance.DoesNotExist:
-            return Response(
-                data={'msg': f'Ошибка создания задания, нет доступа к данному телескопу', 'status': 'error'},
-                status=400)
-'''
 
 
 class BalanceRequestView(generics.ListAPIView):
@@ -233,35 +182,6 @@ class UserTasks(generics.ListAPIView):
 
     def get_queryset(self):
         return Task.objects.filter(author=self.request.user).order_by('-id')
-
-
-class UserTaskCreateView(generics.CreateAPIView):
-    serializer_class = TaskSerializer
-
-    def create(self, request, *args, **kwargs):
-        data = self.request.data
-        data._mutable = True
-        data_tle = data.pop('data_tle')
-        data_json = data.pop('data_json')
-        serializer_class = self.get_serializer_class()
-        serializer = serializer_class(data=data, context=self.get_serializer_context())
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
-        inputtask = serializer.save(self.request.user)
-        return Response(data={
-            'msg': f'Задание №{inputtask.id} успешно создано',
-            'status': 'ok'
-        })
-
-
-def get_task_confirm(request, task_id):
-    task = get_object_or_404(Task, Q(id=task_id, author=request.user, status=Task.DRAFT))
-    task.status = Task.CREATED
-    task.save()
-    return JsonResponse(data={
-            'msg': f'Задание №{task.id} успешно обновлено',
-            'status': 'ok'
-        })
 
 
 class TaskResult(generics.RetrieveAPIView):
