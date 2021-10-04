@@ -9,6 +9,7 @@ urlpatterns = [
     re_path(r'^inputdata/$', views.InputDataView.as_view(), name='inputdata_list'),
     re_path(r'^tasks/$', views.UserTasks.as_view(), name='user_tasks'),
     re_path(r'^task_add/$', views.UserTaskCreateView.as_view(), name='task_add'),
+    re_path(r'^point_task/$', views.PointTaskCreateView.as_view(), name='point_task_add'),
     re_path(r'^tasks_get/(?P<jdn>\d+)?/?$', views.get_telescope_tasks, name='tasks_get'),
     re_path(r'^(?P<pk>\d+)/get_result/$', views.TaskResult.as_view(), name='task_result'),
     re_path(r'^requests/$', views.BalanceRequestView.as_view(), name='requests'),

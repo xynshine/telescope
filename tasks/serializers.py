@@ -1,3 +1,4 @@
+import json
 import locale
 from datetime import datetime
 
@@ -95,6 +96,10 @@ class InputDataSerializer(serializers.ModelSerializer):
             data_type = InputData.TLE
         if self.validated_data.get('data_json') is not None:
             data_type = InputData.JSON
+            data_json = self.validated_data.get('data_json')
+            if isinstance(data_json, str):
+                data_json = json.loads(data_json)
+                self.validated_data.update(data_json=data_json)
         data = super().save(data_type=data_type)
         return data
 

@@ -5,9 +5,10 @@ import julian
 from django.db.models import Q
 
 from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, QueryDict
 from rest_framework import generics
 from rest_framework.response import Response
+from rest_framework.utils import json
 
 
 from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, Balance, AbstractTimeMoment, Point, \
@@ -66,14 +67,14 @@ class UserTaskCreateView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         data = request.data
-        data._mutable = True
+        if isinstance(data, QueryDict):
+            data._mutable = True
         task_serializer_class = self.get_serializer_class()
         task_serializer = task_serializer_class(data=data, context=self.get_serializer_context())
         if not task_serializer.is_valid():
             return Response(task_serializer.errors, status=400)
         inputtask = task_serializer.save(request.user)
         data.update(task=inputtask.id)
-        print(data)
         data_serializer = InputDataSerializer(data=data, context=self.get_serializer_context())
         if not data_serializer.is_valid():
             return Response(data_serializer.errors, status=400)
@@ -146,6 +147,38 @@ class UserTaskCreateView(generics.CreateAPIView):
             'msg': f'Задание №{inputtask.id} успешно создано',
             'status': 'ok'
         })
+
+
+class PointTaskCreateView(UserTaskCreateView):
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        if isinstance(data, QueryDict):
+            data._mutable = True
+        telescope = data.get('telescope', None)
+        task_type = Task.POINTS_MODE
+        data_json = data.get('points', None)
+        points = []
+        frames = []
+        satellites = set()
+        for data_point in data_json:
+            point = {'dt': data_point['dt'], 'alpha': data_point['alpha'], 'beta': data_point['beta'], 'cs_type': data_point['cs_type']}
+            frame = {'dt': data_point['dt'], 'mag': data_point['mag'], 'exposure': data_point['exposure']}
+            satellite = data_point['satellite_id']
+            points.append(point)
+            frames.append(frame)
+            satellites.add(satellite)
+        satellite = None
+        if len(satellites) == 1:
+            satellite = next(iter(satellites))
+        data.clear()
+        data.update(telescope=telescope)
+        if satellite:
+            data.update(satellite=satellite)
+        data.update(task_type=task_type)
+        data.update(data_tle='')
+        data.update(data_json=json.dumps({'points': points, 'frames': frames}))
+        return super().create(request, *args, **kwargs)
 
 
 class BalanceRequestView(generics.ListAPIView):
@@ -238,7 +271,6 @@ def get_telescope_tasks(request, jdn=None):
     plan['telescope']['avatar'] = None
     if not jdn:
         jdn = int(julian.to_jd(datetime.now()))
-    print(jdn)
     tasks = Task.objects.filter(Q(
         status=Task.CREATED,
         telescope_id=telescope_id,
