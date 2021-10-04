@@ -181,6 +181,36 @@ class PointTaskCreateView(UserTaskCreateView):
         return super().create(request, *args, **kwargs)
 
 
+class TrackingTaskCreateView(UserTaskCreateView):
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        print(data)
+        if isinstance(data, QueryDict):
+            data._mutable = True
+        telescope = data.get('telescope', None)
+        task_type = Task.TRACKING_MODE
+        tracking_data = data.get('tracking_data', None)
+        satellite = tracking_data.get('satellite_id', None)
+        mag = tracking_data.get('mag', None)
+        cs_type = Point.EARTH_SYSTEM
+        track_points = data.get('track_points', None)
+        points = []
+        for p in track_points:
+            point = {'dt': p['dt'], 'alpha': p['alpha'], 'beta': p['beta'], 'cs_type': cs_type}
+            points.append(point)
+        frames = data.get('frames', None)
+        for frame in frames:
+            frame.update(mag=mag)
+        data.clear()
+        data.update(telescope=telescope)
+        data.update(satellite=satellite)
+        data.update(task_type=task_type)
+        data.update(data_tle='')
+        data.update(data_json=json.dumps({'points': points, 'frames': frames}))
+        return super().create(request, *args, **kwargs)
+
+
 class BalanceRequestView(generics.ListAPIView):
     serializer_class = BalanceRequestSerializer
 
