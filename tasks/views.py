@@ -16,7 +16,7 @@ from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, 
 from tasks.serializers import (
     TelescopeSerializer, TelescopeBalanceSerializer, SatelliteSerializer,
     InputDataSerializer, PointSerializer, BalanceRequestSerializer,
-    BalanceRequestCreateSerializer, TaskSerializer, TaskResultSerializer, FrameSerializer
+    BalanceRequestCreateSerializer, TaskSerializer, TaskResultSerializer, FrameSerializer, TelescopeTaskSerializer
 )
 from tasks.helpers import telescope_collision_task_message, get_points_json, get_track_json, get_frames_json
 
@@ -293,34 +293,37 @@ def get_telescope_plan(request, telescope_id, task_id):
     return JsonResponse({'plan': data})
 
 
-def get_telescope_tasks(request, jdn=None):
-    plan = {}
-    telescope = get_object_or_404(Telescope, user=request.user)
-    telescope_id = telescope.id
-    plan['telescope'] = telescope.to_dict()
-    plan['telescope']['avatar'] = None
-    if not jdn:
+class TelescopeTasks(generics.ListAPIView):
+    serializer_class = TelescopeTaskSerializer
+
+    def get_queryset(self):
+        plan = {}
+        telescope = get_object_or_404(Telescope, user=self.request.user)
+        telescope_id = telescope.id
+        plan['telescope'] = telescope.to_dict()
+        plan['telescope']['avatar'] = None
         jdn = int(julian.to_jd(datetime.now()))
-    tasks = Task.objects.filter(Q(
-        status=Task.CREATED,
-        telescope_id=telescope_id,
-        jdn=jdn
-    )).order_by('start_dt')
-    plan['points'] = []
-    plan['frames'] = []
-    for task in tasks:
-        points = Point.objects.filter(task=task).order_by('dt')
-        for point in points:
-            p = point.to_dict()
-            p['task_type'] = task.task_type
-            if task.satellite is not None:
-                p['satellite'] = task.satellite.number
-            plan['points'].append(p)
-        frames = Frame.objects.filter(task=task).order_by('dt')
-        for frame in frames:
-            f = frame.to_dict()
-            f['task_type'] = task.task_type
-            if task.satellite is not None:
-                f['satellite'] = task.satellite.number
-            plan['frames'].append(f)
-    return JsonResponse({"plan": plan})
+        plan['jdn'] = jdn
+        tasks = Task.objects.filter(Q(
+            status=Task.CREATED,
+            telescope_id=telescope_id,
+            jdn=jdn
+        )).order_by('start_dt')
+        plan['points'] = []
+        plan['frames'] = []
+        for task in tasks:
+            points = Point.objects.filter(task=task).order_by('dt')
+            for point in points:
+                p = point.to_dict()
+                p['task_type'] = task.task_type
+                if task.satellite is not None:
+                    p['satellite'] = task.satellite.number
+                plan['points'].append(p)
+            frames = Frame.objects.filter(task=task).order_by('dt')
+            for frame in frames:
+                f = frame.to_dict()
+                f['task_type'] = task.task_type
+                if task.satellite is not None:
+                    f['satellite'] = task.satellite.number
+                plan['frames'].append(f)
+        return [plan]

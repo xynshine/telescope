@@ -188,6 +188,22 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = ('id', 'status', 'author', 'created_at', 'telescope', "satellite", 'task_type', 'start_dt', 'end_dt', 'jdn', 'start_jd', 'end_jd', 'url', 'data_tle', 'data_json')
 
 
+class TelescopeTaskSerializer(serializers.Serializer):
+    jdn = serializers.IntegerField()
+    telescope = serializers.DictField()
+    points = serializers.ListField()
+    frames = serializers.ListField()
+
+    def update(self, instance, validated_data):
+        return instance
+
+    def create(self, validated_data):
+        return None
+
+    class Meta:
+        fields = ('jdn', 'telescope', 'points', 'frames')
+
+
 class TaskResultSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
     task_type = serializers.SerializerMethodField()
