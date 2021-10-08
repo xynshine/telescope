@@ -3,6 +3,7 @@ import locale
 from datetime import datetime
 
 import pytz
+from django.db.models import Q
 from rest_framework import serializers
 from telescope.settings import SITE_URL, MEDIA_URL
 from tasks.models import Telescope, Satellite, InputData, Point, Task, Frame, TLEData, BalanceRequest, TaskResult
@@ -275,3 +276,23 @@ class TaskResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = ('name', 'task_type', 'created', 'start_dt', 'end_dt', 'results', 'type_code', 'other_data')
+
+
+class TelescopeFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+    def get_queryset(self):
+        request = self.context.get('request', None)
+        user = request.user
+        telescope = Telescope.objects.get(user=user)
+        queryset = super().get_queryset()
+        return queryset.filter(telescope=telescope)
+
+
+class TaskStatusSerializer(serializers.ModelSerializer):
+    id = TelescopeFilteredPrimaryKeyRelatedField(queryset=Task.objects.filter(Q(
+        status__in=[Task.CREATED, Task.RECEIVED]
+    )))
+    status = serializers.ChoiceField(choices=[Task.STATUS_CHOICES[2], Task.STATUS_CHOICES[3], Task.STATUS_CHOICES[4]])
+
+    class Meta:
+        model = Task
+        fields = ('id', 'status')

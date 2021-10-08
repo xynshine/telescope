@@ -15,7 +15,7 @@ from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, 
     Frame
 from tasks.serializers import (
     TelescopeSerializer, TelescopeBalanceSerializer, SatelliteSerializer,
-    InputDataSerializer, PointSerializer, BalanceRequestSerializer,
+    InputDataSerializer, PointSerializer, BalanceRequestSerializer, TaskStatusSerializer,
     BalanceRequestCreateSerializer, TaskSerializer, TaskResultSerializer, FrameSerializer, TelescopeTaskSerializer
 )
 from tasks.helpers import telescope_collision_task_message, get_points_json, get_track_json, get_frames_json
@@ -185,7 +185,6 @@ class TrackingTaskCreateView(UserTaskCreateView):
 
     def create(self, request, *args, **kwargs):
         data = request.data
-        print(data)
         if isinstance(data, QueryDict):
             data._mutable = True
         telescope = data.get('telescope', None)
@@ -327,3 +326,11 @@ class TelescopeTasks(generics.ListAPIView):
                     f['satellite'] = task.satellite.number
                 plan['frames'].append(f)
         return [plan]
+
+
+class TaskStatusView(generics.CreateAPIView):
+    serializer_class = TaskStatusSerializer
+
+    def create(self, request, *args, **kwargs):
+        task_id = self.request.data.get('id', None)
+        print(task_id)
