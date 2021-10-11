@@ -3,7 +3,7 @@ import locale
 from datetime import datetime
 
 import pytz
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from rest_framework import serializers
 from telescope.settings import SITE_URL, MEDIA_URL
 from tasks.models import Telescope, Satellite, InputData, Point, Task, Frame, TLEData, BalanceRequest, TaskResult
@@ -281,17 +281,25 @@ class TaskResultSerializer(serializers.ModelSerializer):
 class TelescopeFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
     def get_queryset(self):
         request = self.context.get('request', None)
-        user = request.user
-        telescope = Telescope.objects.get(user=user)
-        queryset = super().get_queryset()
-        return queryset.filter(telescope=telescope)
+        if request:
+            user = request.user
+            if user:
+                telescope = Telescope.objects.get(user=user)
+                if telescope:
+                    queryset = super().get_queryset()
+                    return queryset.filter(telescope=telescope)
+        return QuerySet()
 
 
 class TaskStatusSerializer(serializers.ModelSerializer):
     id = TelescopeFilteredPrimaryKeyRelatedField(queryset=Task.objects.filter(Q(
         status__in=[Task.CREATED, Task.RECEIVED]
     )))
-    status = serializers.ChoiceField(choices=[Task.STATUS_CHOICES[2], Task.STATUS_CHOICES[3], Task.STATUS_CHOICES[4]])
+    status = serializers.ChoiceField(choices=[
+        Task.STATUS_CHOICES[Task.RECEIVED],
+        Task.STATUS_CHOICES[Task.READY],
+        Task.STATUS_CHOICES[Task.FAILED],
+    ])
 
     class Meta:
         model = Task
