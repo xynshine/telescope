@@ -332,5 +332,13 @@ class TaskStatusView(generics.CreateAPIView):
     serializer_class = TaskStatusSerializer
 
     def create(self, request, *args, **kwargs):
-        task_id = self.request.data.get('id', None)
-        print(task_id)
+        data = request.data
+        task_serializer_class = self.get_serializer_class()
+        task_serializer = task_serializer_class(data=data, context=self.get_serializer_context())
+        if not task_serializer.is_valid():
+            return Response(task_serializer.errors, status=400)
+        task = task_serializer.save(user=request.user)
+        return Response(data={
+            'msg': f'Задание №{task.id} успешно обновлено',
+            'status': 'ok'
+        })

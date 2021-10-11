@@ -301,6 +301,27 @@ class TaskStatusSerializer(serializers.ModelSerializer):
         Task.STATUS_CHOICES[Task.FAILED],
     ])
 
+    def validate(self, data):
+        status = data.get('status', None)
+        if status is None:
+            raise serializers.ValidationError({"status": "status is None"})
+        if status < Task.RECEIVED:
+            raise serializers.ValidationError({"status": "status < Task.RECEIVED"})
+        return data
+
+    def save(self, user):
+        task = self.validated_data.get('id', None)
+        if task is None:
+            raise serializers.ValidationError({"id": "task is None"})
+        telescope = task.telescope
+        if telescope is None:
+            raise serializers.ValidationError({"id": "telescope is None"})
+        if telescope.user.id != user.id:
+            raise serializers.ValidationError({"id": "telescope.user.id != user.id"})
+        task.status = self.validated_data.get('status', None)
+        task.save()
+        return task
+
     class Meta:
         model = Task
         fields = ('id', 'status')
