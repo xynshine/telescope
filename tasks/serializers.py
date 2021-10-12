@@ -205,6 +205,71 @@ class TelescopeTaskSerializer(serializers.Serializer):
         fields = ('jdn', 'telescope', 'points', 'frames')
 
 
+class TaskResultSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    task_type = serializers.SerializerMethodField()
+    created = serializers.SerializerMethodField()
+    start_dt = serializers.SerializerMethodField()
+    end_dt = serializers.SerializerMethodField()
+    results = serializers.SerializerMethodField()
+    type_code = serializers.SerializerMethodField()
+    other_data = serializers.SerializerMethodField()
+
+    def get_name(self, obj):
+        return f'Результаты задания №{obj.id}'
+
+    def get_task_type(self, obj):
+        return obj.get_task_type_display()
+
+    def get_created(self, obj):
+        locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
+        return obj.created_at.strftime("%Y-%m-%d %H:%M")
+
+    def get_start_dt(self, obj):
+        return obj.start_dt.strftime("%Y-%m-%d %H:%M")
+
+    def get_end_dt(self, obj):
+        return obj.end_dt.strftime("%Y-%m-%d %H:%M")
+
+    def get_type_code(self, obj):
+        if obj.task_type == Task.POINTS_MODE:
+            return 'point'
+        if obj.task_type == Task.TRACKING_MODE:
+            return 'track'
+        return 'null'
+
+    def get_other_data(self, obj):
+        return {
+            'satellite': obj.satellite.number,
+            'mag': Frame.objects.filter(task=obj).first().mag
+        }
+
+    def get_results(self, obj):
+        results = []
+        for result in TaskResult.objects.filter(task=obj):
+            if obj.task_type == Task.POINTS_MODE:
+                results.append({
+                    'satellite': obj.satellite_id,
+                    'mag': result.frame.mag,
+                    'dt': result.point.dt.strftime('%Y-%m-%d %H:%M'),
+                    'alpha': result.point.alpha,
+                    'beta': result.point.beta,
+                    'exposure': result.frame.exposure,
+                    'url': f'{SITE_URL}{result.image.url}',
+                })
+            else:
+                results.append({
+                    'exposure': result.frame.exposure,
+                    'dt': result.frame.dt.strftime('%Y-%m-%d %H:%M'),
+                    'url': f'{SITE_URL}{result.image.url}',
+                })
+        return results
+
+    class Meta:
+        model = Task
+        fields = ('name', 'task_type', 'created', 'start_dt', 'end_dt', 'results', 'type_code', 'other_data')
+
+
 class TelescopeFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
     def get_queryset(self):
         request = self.context.get('request', None)
