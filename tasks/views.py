@@ -5,18 +5,17 @@ import julian
 from django.db.models import Q
 
 from django.shortcuts import get_object_or_404
-from django.http import JsonResponse, QueryDict
+from django.http import QueryDict
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.utils import json
 
 
-from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, Balance, AbstractTimeMoment, Point, \
-    Frame
+from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, AbstractTimeMoment, Point, Frame
 from tasks.serializers import (
     TelescopeSerializer, TelescopeBalanceSerializer, SatelliteSerializer,
     InputDataSerializer, PointSerializer, BalanceRequestSerializer, TaskStatusSerializer,
-    BalanceRequestCreateSerializer, TaskSerializer, TaskResultSerializer, FrameSerializer, TelescopeTaskSerializer
+    BalanceRequestCreateSerializer, TaskSerializer, FrameSerializer, TelescopeTaskSerializer
 )
 from tasks.helpers import telescope_collision_task_message, get_points_json, get_track_json, get_frames_json
 
@@ -229,67 +228,11 @@ class BalanceRequestCreateView(generics.CreateAPIView):
         return Response(data=f'Заявка №{request.id} успешна создана')
 
 
-def get_telescope_schedule(request, telescope_id):
-    locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
-    actual_tasks = Task.objects.filter(status__in=[Task.CREATED, Task.RECEIVED], telescope_id=telescope_id)
-    slots = []
-    for task in actual_tasks:
-        slot = f'{task.start_dt.strftime("%d %b %Y, %H:%M:%S")} - {task.end_dt.strftime("%d %b %Y, %H:%M:%S")}'
-        slots.append(slot)
-    return JsonResponse({'schedule': slots})
-
-
 class UserTasks(generics.ListAPIView):
     serializer_class = TaskSerializer
 
     def get_queryset(self):
         return Task.objects.filter(author=self.request.user).order_by('-id')
-
-
-class TaskResult(generics.RetrieveAPIView):
-    serializer_class = TaskResultSerializer
-    queryset = Task.objects.all()
-
-
-def get_telescope_plan(request, telescope_id, task_id):
-    telescope = get_object_or_404(Telescope, id=telescope_id)
-    task = get_object_or_404(Task, id=task_id)
-    telescope_data = {
-        'id': telescope_id,
-        'name': telescope.name,
-        'site_lon': telescope.longitude,
-        'site_lat': telescope.latitude,
-        'site_height': telescope.altitude,
-        'FOV': telescope.fov,
-    }
-    data = {
-        'user': task.author.get_full_name(),
-        'key': task.author_id,
-        'jd_start': julian.to_jd(task.start_dt, fmt='jd'),
-        'jd_end': julian.to_jd(task.end_dt, fmt='jd'),
-        'telescope': telescope_data,
-    }
-    if task.task_type == Task.POINTS_MODE:
-        data['points'] = get_points_json(task.points.all())
-    if task.task_type == Task.TRACKING_MODE:
-        tracking_data = {
-            'id': task.tracking_data.first().satellite_id,
-            'mag': task.tracking_data.first().mag,
-            'step_sec': task.tracking_data.first().step_sec,
-            'count': task.tracking_data.first().count,
-            'track': get_track_json(task.track_points.all()),
-            'frames': get_frames_json(task.frames.all()),
-        }
-        data['tracking'] = tracking_data
-    if task.task_type == Task.TLE_MODE:
-        tle_data = {
-            'id': task.TLE_data.first().satellite_id,
-            'line1': task.TLE_data.first().line1,
-            'line2': task.TLE_data.first().line2,
-            'frames': get_frames_json(task.frames.all()),
-        }
-        data['TLE'] = tle_data
-    return JsonResponse({'plan': data})
 
 
 class TelescopeTasks(generics.ListAPIView):
