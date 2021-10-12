@@ -14,6 +14,7 @@ urlpatterns = [
     re_path(r'^tasks_get/$', views.TelescopeTasks.as_view(), name='telescope_tasks'),
     re_path(r'^task_stat/$', views.TaskStatusView.as_view(), name='task_status'),
     re_path(r'^(?P<pk>\d+)/get_result/$', views.TaskResultView.as_view(), name='task_result'),
+    re_path(r'^(?P<task_id>\d+)/add_result/$', views.ResultCreateView.as_view(), name='add_result'),
     re_path(r'^requests/$', views.BalanceRequestView.as_view(), name='requests'),
     re_path(r'^save_request/$', views.BalanceRequestCreateView.as_view(), name='save_request'),
     re_path(r'^telescopes_with_balances/$', views.TelescopeChoosingView.as_view(), name='telescope_with_balances'),

@@ -317,3 +317,63 @@ class TaskStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = ('id', 'status')
+
+
+class TaskFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+    def get_queryset(self):
+        request = self.context.get('request', None)
+        if request:
+            queryset = super().get_queryset()
+
+            task_id = request.parser_context.get('kwargs').get('task_id')
+            if isinstance(task_id, str):
+                task_id = int(task_id)
+            queryset = queryset.filter(id=task_id)
+
+            user = request.user
+            if user:
+                telescope = Telescope.objects.get(user=user)
+                if telescope:
+                    queryset = queryset.filter(telescope=telescope)
+                else:
+                    queryset = QuerySet()
+            else:
+                queryset = QuerySet()
+
+            queryset = queryset.filter(status=Task.RECEIVED)
+
+            return queryset
+
+        return QuerySet()
+
+
+class TimeMomentFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+    def get_queryset(self):
+        request = self.context.get('request', None)
+        if request:
+            queryset = super().get_queryset()
+
+            task_id = request.parser_context.get('kwargs').get('task_id')
+            if isinstance(task_id, str):
+                task_id = int(task_id)
+            queryset = queryset.filter(task_id=task_id)
+
+            return queryset
+
+        return QuerySet()
+
+
+class ResultSerializer(serializers.ModelSerializer):
+    task = TaskFilteredPrimaryKeyRelatedField(queryset=Task.objects.all())
+    point = TimeMomentFilteredPrimaryKeyRelatedField(queryset=Point.objects.all(), allow_null=True)
+    frame = TimeMomentFilteredPrimaryKeyRelatedField(queryset=Frame.objects.all())
+
+    def validate(self, data):
+        return data
+
+    def save(self, user):
+        return None
+
+    class Meta:
+        model = TaskResult
+        fields = ('task', 'point', 'frame', 'image')

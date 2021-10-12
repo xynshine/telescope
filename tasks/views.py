@@ -15,7 +15,8 @@ from tasks.models import Telescope, Satellite, InputData, Task, BalanceRequest, 
 from tasks.serializers import (
     TelescopeSerializer, TelescopeBalanceSerializer, SatelliteSerializer,
     InputDataSerializer, PointSerializer, BalanceRequestSerializer, TaskStatusSerializer,
-    BalanceRequestCreateSerializer, TaskSerializer, TaskResultSerializer, FrameSerializer, TelescopeTaskSerializer
+    BalanceRequestCreateSerializer, TaskSerializer, TaskResultSerializer, FrameSerializer, TelescopeTaskSerializer,
+    ResultSerializer
 )
 from tasks.helpers import telescope_collision_task_message, get_points_json, get_track_json, get_frames_json
 
@@ -289,4 +290,14 @@ class TaskStatusView(generics.CreateAPIView):
         return Response(data={
             'msg': f'Задание №{task.id} успешно обновлено',
             'status': 'ok'
+        })
+
+
+class ResultCreateView(generics.CreateAPIView):
+    serializer_class = ResultSerializer
+
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        task_id = kwargs.pop('task_id', None)
+        return Response(data={
         })
