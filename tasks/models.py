@@ -421,4 +421,4 @@ class TaskResult(models.Model):
         verbose_name_plural = 'Результаты наблюдений'
 
     def __str__(self):
-        return f'Снимок {self.id} (задание {self.task.id}, на фрейм/точку{self.point_id or self.frame_id })'
+        return f'Снимок {self.id} (задание {self.task.id}, на фрейм/точку №{self.point_id or self.frame_id })'

@@ -281,9 +281,8 @@ class TaskStatusView(generics.CreateAPIView):
     serializer_class = TaskStatusSerializer
 
     def create(self, request, *args, **kwargs):
-        data = request.data
         task_serializer_class = self.get_serializer_class()
-        task_serializer = task_serializer_class(data=data, context=self.get_serializer_context())
+        task_serializer = task_serializer_class(data=request.data, context=self.get_serializer_context())
         if not task_serializer.is_valid():
             return Response(task_serializer.errors, status=400)
         task = task_serializer.save(user=request.user)
