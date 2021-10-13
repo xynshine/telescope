@@ -255,7 +255,7 @@ class TaskResultSerializer(serializers.ModelSerializer):
                     'alpha': result.point.alpha,
                     'beta': result.point.beta,
                     'exposure': result.frame.exposure,
-                    'url': f'{SITE_URL}{result.image.url}',
+                    'url': f'{SITE_URL}/{result.image.url if result.image else None}',
                 })
             else:
                 results.append({
