@@ -368,11 +368,28 @@ class ResultSerializer(serializers.ModelSerializer):
     point = TimeMomentFilteredPrimaryKeyRelatedField(queryset=Point.objects.all(), allow_null=True)
     frame = TimeMomentFilteredPrimaryKeyRelatedField(queryset=Frame.objects.all())
 
-    def validate(self, data):
-        return data
-
-    def save(self, user):
-        return None
+    def save(self, user, task_id):
+        task = self.validated_data.get('task', None)
+        if task is None:
+            raise serializers.ValidationError({"task": "task is None"})
+        if task.id != task_id:
+            raise serializers.ValidationError({"task": "task.id != task_id"})
+        telescope = task.telescope
+        if telescope is None:
+            raise serializers.ValidationError({"task": "telescope is None"})
+        if telescope.user.id != user.id:
+            raise serializers.ValidationError({"task": "telescope.user.id != user.id"})
+        point = self.validated_data.get('point', None)
+        if point:
+            if point.task.id != task_id:
+                raise serializers.ValidationError({"point": "point.task.id != task_id"})
+        frame = self.validated_data.get('frame', None)
+        if frame is None:
+            raise serializers.ValidationError({"frame": "frame is None"})
+        if frame.task.id != task_id:
+            raise serializers.ValidationError({"frame": "frame.task.id != task_id"})
+        result = super().save()
+        return result
 
     class Meta:
         model = TaskResult

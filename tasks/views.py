@@ -296,7 +296,12 @@ class ResultCreateView(generics.CreateAPIView):
     serializer_class = ResultSerializer
 
     def create(self, request, *args, **kwargs):
-        user = request.user
-        task_id = kwargs.pop('task_id', None)
+        result_serializer_class = self.get_serializer_class()
+        result_serializer = result_serializer_class(data=request.data, context=self.get_serializer_context())
+        if not result_serializer.is_valid():
+            return Response(result_serializer.errors, status=400)
+        result = result_serializer.save(user=request.user, task_id=int(kwargs.pop('task_id', None)))
         return Response(data={
+            'msg': f'Результат №{result.id} успешно обновлен',
+            'status': 'ok'
         })
